@@ -10,8 +10,6 @@ class PromotionController extends Controller
     public function index(Request $request)
     {
 
-        $promotion_id = $request->promotion_id ?? null;
-
         $pos_db = getPosDBConnectionByBranchCode('MM-101');
 
         $promotions = $pos_db->table('gold_exchange.point_exchange_promotion')
@@ -23,8 +21,6 @@ class PromotionController extends Controller
     }
 
     public function show($id){
-
-        sleep(2);
 
         $pos_db = getPosDBConnectionByBranchCode('MM-101');
 

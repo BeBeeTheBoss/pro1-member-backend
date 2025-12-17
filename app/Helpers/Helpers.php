@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Facades\DB;
+
 if (!function_exists('sendResponse')) {
     function sendResponse($data, $status, $message = "No message")
     {
