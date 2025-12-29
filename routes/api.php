@@ -3,11 +3,13 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 // use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\FAQController;
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\HistoryController;
 use App\Http\Controllers\Api\PromotionController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PointTransferController;
 
 Route::post('/login', [AuthController::class, 'login']);
@@ -19,6 +21,7 @@ Route::group(['prefix' => 'users', 'controller' => UserController::class], funct
     Route::post('/update', 'updateUser')->name('updateUser');
     Route::post('/find-member','findMember')->name('findMember');
     Route::post('/change-password', 'changePassword')->name('changePassword');
+    Route::post('/set-push-token', 'setPushToken')->name('setPushToken');
 });
 
 Route::post('/get-points', [UserController::class, 'getPoints'])->name('points');
@@ -48,12 +51,22 @@ Route::group(['prefix' => 'branches', 'controller' => BranchController::class], 
     Route::get('/', 'index');
 });
 
+Route::group(['prefix' => 'faqs', 'controller' => FAQController::class],function(){
+    Route::get('/', 'index');
+});
+
+Route::group(['prefix' => 'notifications', 'controller' => NotificationController::class],function(){
+    Route::get('/','index');
+    Route::get('/read','read');
+});
+
 //QR
 // Route::group(['prefix' => 'qr', 'controller' => UserController::class],function(){
 //     Route::store('/')
 // });
 Route::post('/storePointRedemptionQR', [UserController::class, 'storePointRedemptionQR'])->name('storePointRedemptionQR');
 Route::post('/validatePointRedemptionQR', [UserController::class, 'validatePointRedemptionQR'])->name('validatePointRedemptionQR');
+Route::post('/storeCouponQR', [UserController::class, 'storeCouponQR'])->name('storeCouponQR');
 Route::post('/validateCouponQR', [UserController::class, 'validateCouponQR'])->name('validateCouponQR');
 
 Route::get('/user', function (Request $request) {

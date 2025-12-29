@@ -77,13 +77,14 @@ export default function Notifications({ user, notifications }) {
                         <table className="table-fixed min-w-max w-full text-left text-sm">
                             <thead className="bg-white/5 border-b border-white/10 sticky top-0 z-10">
                                 <tr>
+                                    <th className="px-4 py-3 w-32 text-center">
+                                        Image
+                                    </th>
                                     <th className="px-4 py-3 w-40 text-center">
                                         Action
                                     </th>
                                     <th className="px-4 py-3 w-[300px]">Title</th>
-                                    <th className="px-4 py-3 w-[300px]">
-                                        Message
-                                    </th>
+                                    <th className="px-4 py-3 w-[300px]">Message</th>
                                     <th className="px-4 py-3 w-48 text-center">
                                         Recipient
                                     </th>
@@ -102,8 +103,23 @@ export default function Notifications({ user, notifications }) {
                                         transition={{ delay: i * 0.08 }}
                                         className="hover:bg-white/5 transition-colors border-b border-white/5"
                                     >
+                                        {/* Image */}
+                                        <td className="px-4 py-3 text-center">
+                                            {n.image ? (
+                                                <img
+                                                    src={n.image}
+                                                    alt={n.title}
+                                                    className="w-22 h-12 rounded-lg object-cover mx-auto"
+                                                />
+                                            ) : (
+                                                <div className="w-22 h-12 bg-white/10 rounded-lg mx-auto flex items-center justify-center text-xs text-gray-400">
+                                                    N/A
+                                                </div>
+                                            )}
+                                        </td>
+
                                         {/* Actions */}
-                                        <td className="px-4 py-3 flex">
+                                        <td className="px-4 py-3 flex justify-center gap-2">
                                             <button
                                                 onClick={() =>
                                                     router.get(
@@ -121,7 +137,7 @@ export default function Notifications({ user, notifications }) {
                                                     setModalOpen(true);
                                                     setDeleteId(n.id);
                                                 }}
-                                                className="px-3 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-xs shadow ms-2"
+                                                className="px-3 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-xs shadow"
                                             >
                                                 Delete
                                             </button>
@@ -131,16 +147,16 @@ export default function Notifications({ user, notifications }) {
                                         <td className="px-4 py-3">{n.title}</td>
 
                                         {/* Message */}
-                                        <td className="px-4 py-3 text-gray-300">
-                                            {n.message}
-                                        </td>
+                                        <td className="px-4 py-3 text-gray-300">{n.message}</td>
+
+                                        {/* Recipient */}
                                         <td className="px-4 py-3 text-center">
                                             {n.recipient === "all" ? (
-                                                <span className="px-3 py-1 rounded-lg text-xs bg-indigo-500/30 text-indigo-300 border border-indigo-400/30">
+                                                <span className="px-3 py-2 rounded-lg text-xs bg-blue-500/30 text-blue-300">
                                                     All Users
                                                 </span>
                                             ) : (
-                                                <span className="px-3 py-1 rounded-lg text-xs bg-emerald-500/30 text-emerald-300 border border-emerald-400/30">
+                                                <span className="px-3 py-2 rounded-lg text-xs bg-purple-500/30 text-purple-300">
                                                     {n.user ?? "Specific User"}
                                                 </span>
                                             )}

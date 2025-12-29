@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import axios from "axios";
 
-export default function CreateNotification({ user ,notification}) {
+export default function UpdateNotification({ user, notification }) {
     const { data, setData, post, processing, errors, setError, clearErrors } =
         useForm({
             id: notification.id,
@@ -12,41 +12,59 @@ export default function CreateNotification({ user ,notification}) {
             message: notification.message,
             choice: notification.recipient, // all or specific
             user_id: notification.user?.id, // for single choice
+            image: notification.image, // optional new image
         });
 
-    const [searchTerm, setSearchTerm] = useState(notification.user ? `${notification.user?.name} (${notification.user?.phone})` : "");
+    const [imagePreview, setImagePreview] = useState(
+        notification.image ?? null
+    );
+    const [searchTerm, setSearchTerm] = useState(
+        notification.user
+            ? `${notification.user?.name} (${notification.user?.phone})`
+            : ""
+    );
     const [searchResults, setSearchResults] = useState([]);
 
-    // Simulated API call to search users
+    /* ------------------- SEARCH USERS ------------------- */
     const searchUsers = async (query) => {
         if (!query) return setSearchResults([]);
         try {
-            console.log(query);
-
             const response = await axios.get("/api/users/search", {
-                params: {
-                    searchKey: query,
-                },
+                params: { searchKey: query },
             });
-            console.log(response);
-
-            setSearchResults(response.data); // Expect array [{id, name, phone, id_card}]
+            setSearchResults(response.data);
         } catch (error) {
             console.error(error);
         }
     };
 
     useEffect(() => {
-        const timeout = setTimeout(() => {
-            searchUsers(searchTerm);
-        }, 300); // debounce
+        const timeout = setTimeout(() => searchUsers(searchTerm), 300);
         return () => clearTimeout(timeout);
     }, [searchTerm]);
 
+    /* ------------------- IMAGE HANDLER ------------------- */
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setData("image", file);
+
+        const reader = new FileReader();
+        reader.onload = () => setImagePreview(reader.result);
+        reader.readAsDataURL(file);
+    };
+
+    const removeImage = () => {
+        setData("image", null);
+        setImagePreview(null);
+    };
+
+    /* ------------------- SUBMIT ------------------- */
     const submit = (e) => {
         e.preventDefault();
-        let hasError = false;
         clearErrors();
+        let hasError = false;
 
         if (!data.title.trim()) {
             setError("title", "Title is required");
@@ -62,7 +80,7 @@ export default function CreateNotification({ user ,notification}) {
         }
         if (hasError) return;
 
-        post("/notifications/update");
+        post("/notifications/update", { forceFormData: true });
     };
 
     return (
@@ -70,11 +88,14 @@ export default function CreateNotification({ user ,notification}) {
             <div className="max-w-3xl mx-auto">
                 <div className="flex justify-between items-center mb-4">
                     <h4 className="text-xl font-bold text-white">
-                        Create Notification
+                        Update Notification
                     </h4>
                 </div>
 
-                <button className="bg-white/10 flex items-center px-4 py-2 rounded-2xl mb-4 hover:bg-white/15" onClick={() => router.get('/notifications')}>
+                <button
+                    className="bg-white/10 flex items-center px-4 py-2 rounded-2xl mb-4 hover:bg-white/15"
+                    onClick={() => router.get("/notifications")}
+                >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         className="h-6 w-6 text-white mb-2"
@@ -98,7 +119,59 @@ export default function CreateNotification({ user ,notification}) {
                     className="bg-white/10 rounded-2xl shadow-lg p-6 backdrop-blur-md"
                 >
                     <form onSubmit={submit} className="space-y-5">
-                        {/* Title */}
+                        {/* ------------------- IMAGE UPLOAD ------------------- */}
+                        <div className="flex justify-center">
+                            <label className="relative group w-full max-w-md cursor-pointer">
+                                <div
+                                    className={`rounded-2xl border-2 border-dashed
+                                    ${
+                                        errors.image
+                                            ? "border-red-500"
+                                            : "border-white/20 hover:border-indigo-400"
+                                    }
+                                    bg-white/5 overflow-hidden flex items-center justify-center transition`}
+                                    style={{ height: "250px" }}
+                                >
+                                    {imagePreview ? (
+                                        <>
+                                            <img
+                                                src={imagePreview}
+                                                alt="Preview"
+                                                className="w-full h-full object-cover"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    removeImage();
+                                                }}
+                                                className="absolute top-2 right-2 bg-black/50 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-500 transition"
+                                            >
+                                                ✕
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <div className="flex flex-col items-center text-center text-gray-300">
+                                            <p className="text-sm">
+                                                Click to upload notification
+                                                image
+                                            </p>
+                                            <p className="text-xs opacity-60 mt-1">
+                                                JPG, PNG, WEBP (optional)
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageChange}
+                                    className="hidden"
+                                />
+                            </label>
+                        </div>
+
+                        {/* ------------------- TITLE ------------------- */}
                         <div>
                             <label className="block text-lg mb-2 text-white">
                                 Title <span className="text-red-400">*</span>
@@ -123,7 +196,7 @@ export default function CreateNotification({ user ,notification}) {
                             )}
                         </div>
 
-                        {/* Message */}
+                        {/* ------------------- MESSAGE ------------------- */}
                         <div>
                             <label className="block text-lg mb-2 text-white">
                                 Message <span className="text-red-400">*</span>
@@ -148,7 +221,7 @@ export default function CreateNotification({ user ,notification}) {
                             )}
                         </div>
 
-                        {/* Choice Radio */}
+                        {/* ------------------- CHOICE RADIO ------------------- */}
                         <div>
                             <label className="block text-lg mb-2 text-white">
                                 Send To
@@ -183,7 +256,7 @@ export default function CreateNotification({ user ,notification}) {
                             </div>
                         </div>
 
-                        {/* Searchable User Input */}
+                        {/* ------------------- USER SEARCH ------------------- */}
                         {data.choice === "specific" && (
                             <div className="relative">
                                 <label className="block text-lg mb-2 text-white">
@@ -195,8 +268,6 @@ export default function CreateNotification({ user ,notification}) {
                                         <span className="text-lg truncate">
                                             {searchTerm}
                                         </span>
-
-                                        {/* Clear selection */}
                                         <button
                                             type="button"
                                             onClick={() => {
@@ -224,16 +295,8 @@ export default function CreateNotification({ user ,notification}) {
                                             }`}
                                     />
                                 )}
-                                {/* Search results dropdown */}
                                 {searchResults.length > 0 && (
-                                    <ul
-                                        className="absolute z-10 w-full bg-black/50 rounded-lg mt-1 max-h-60 overflow-auto shadow-lg pb-3 pt-3"
-                                        style={{
-                                            maxHeight: "200px",
-                                            overflow: "scroll",
-                                            scrollbarColor: "#3a3a3aff black",
-                                        }}
-                                    >
+                                    <ul className="absolute z-10 w-full bg-black/50 rounded-lg mt-1 max-h-60 overflow-auto shadow-lg pb-3 pt-3">
                                         {searchResults.map((u) => (
                                             <li
                                                 key={u.id}
@@ -266,7 +329,7 @@ export default function CreateNotification({ user ,notification}) {
                             </div>
                         )}
 
-                        {/* Submit */}
+                        {/* ------------------- SUBMIT ------------------- */}
                         <div className="flex justify-end gap-3">
                             <Link href={route("notifications")}>
                                 <button

@@ -408,6 +408,25 @@ class UserController extends Controller
         return sendResponse(null, 200);
     }
 
+    public function storeCouponQR(Request $request)
+    {
+
+        info($request->qrText);
+
+        $qrcode = $request->qrText;
+        $timestamp = explode(',', $request->qrText)[0];
+        $user = $this->model->where('idcard', $request->idcard)->first();
+
+        QRCode::create([
+            'qr_code' => $qrcode,
+            'timestamp' => $timestamp,
+            'user_id' => $user->id
+        ]);
+
+        return sendResponse(null, 200);
+    }
+
+
     public function validatePointRedemptionQR(Request $request)
     {
         $secret_key = env('SECRET_KEY');
@@ -469,7 +488,7 @@ class UserController extends Controller
         ]);
     }
 
-        public function validateCouponQR(Request $request)
+    public function validateCouponQR(Request $request)
     {
         $secret_key = env('SECRET_KEY');
 
@@ -528,6 +547,18 @@ class UserController extends Controller
             'memberCardNo' => $user->idcard,
             'phoneNo' => $user->phone,
         ]);
+    }
+
+    public function setPushToken(Request $request){
+        $request->validate([
+            'token' => 'required',
+            'idcard' => 'required'
+        ]);
+
+        $this->model->where('idcard', $request->idcard)->update([
+            'expo_push_token' => $request->token
+        ]);
+
     }
 
 }

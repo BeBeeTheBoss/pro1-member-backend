@@ -26,7 +26,8 @@ class User extends Authenticatable
         'isFLPUsed',
         'birth_date',
         'gender',
-        'image'
+        'image',
+        'expo_push_token'
     ];
 
     /**

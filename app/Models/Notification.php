@@ -10,6 +10,7 @@ class Notification extends Model
         'title',
         'message',
         'recipient',
+        'image'
     ];
 
     public function userNotifications()

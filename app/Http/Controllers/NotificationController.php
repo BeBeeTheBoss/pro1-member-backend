@@ -8,6 +8,8 @@ use App\Models\Notification;
 use Illuminate\Http\Request;
 use App\Models\UserNotification;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\NotificationResource;
 
 class NotificationController extends Controller
@@ -45,13 +47,32 @@ class NotificationController extends Controller
             'recipient' => $request->choice
         ]);
 
-        $userIds_for_notification = $request->choice === 'all' ? User::pluck('id') : User::where('id', $request->user_id)->pluck('id');
+        if ($request->hasFile('image')) {
 
-        foreach ($userIds_for_notification as $user_id) {
+            $image = $request->file('image');
+            $filename = time() . '.' . $request->image->extension();
+            Storage::disk('public')->putFileAs('notifications', $image, $filename);
+            $notification->image = $filename;
+            $notification->save();
+        }
+
+        $users = $request->choice === 'all' ? User::get() : User::where('id', $request->user_id)->get();
+
+        foreach ($users as $user) {
 
             UserNotification::create([
-                'user_id' => $user_id,
+                'user_id' => $user->id,
                 'notification_id' => $notification->id
+            ]);
+
+            Http::withHeaders([
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+            ])->post('https://exp.host/--/api/v2/push/send', [
+                'to' => $user->expo_push_token,
+                'sound' => 'default',
+                'title' => $request->title,
+                'body' => $request->message ?? '',
             ]);
         }
 
@@ -68,6 +89,8 @@ class NotificationController extends Controller
         if ($notification->recipient === 'specific') {
             $notification['user'] = User::where('id', UserNotification::where('notification_id', $notification->id)->first()->user_id)->select('id', 'name', 'idcard', 'phone')->first();
         }
+
+        $notification->image = $notification->image ? url("storage/notifications/" . $notification->image) : null;
 
         return Inertia::render('Notifications/Edit', [
             'notification' => $notification,
@@ -86,6 +109,26 @@ class NotificationController extends Controller
             'recipient' => $request->choice
         ]);
 
+        if ($notification->image && !$request->hasFile('image') && $request->image === null) {
+            Storage::disk('public')->delete('notifications/' . $notification->image);
+            $notification->image = null;
+            $notification->save();
+        }
+
+        if ($request->hasFile('image')) {
+
+            $image = $request->file('image');
+            $filename = time() . '.' . $request->image->extension();
+
+            if ($notification->image) {
+                Storage::disk('public')->delete('notifications/' . $notification->image);
+            }
+
+            Storage::disk('public')->putFileAs('notifications', $image, $filename);
+            $notification->image = $filename;
+            $notification->save();
+        }
+
         UserNotification::where('notification_id', $notification->id)->delete();
 
         $userIds_for_notification = $request->choice === 'all' ? User::pluck('id') : User::where('id', $request->user_id)->pluck('id');
@@ -101,7 +144,8 @@ class NotificationController extends Controller
         return redirect()->route('notifications')->with('success', 'Notification updated successfully');
     }
 
-    public function destroy($id){
+    public function destroy($id)
+    {
         $notification = $this->model->find($id);
 
         UserNotification::where('notification_id', $notification->id)->delete();
@@ -109,5 +153,4 @@ class NotificationController extends Controller
         $notification->delete();
         return redirect()->route('notifications')->with('success', 'Notification deleted successfully');
     }
-
 }

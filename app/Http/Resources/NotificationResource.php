@@ -23,6 +23,8 @@ class NotificationResource extends JsonResource
             $data['user'] = User::where('id', UserNotification::where('notification_id', $data['id'])->first()->user_id)->first()->name;
         }
 
+        $data['image'] = $data['image'] ? url("storage/notifications/".$data['image']) : null;
+
         return $data;
     }
 }
