@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
 class AuthController extends Controller
@@ -18,8 +19,6 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-
-        info($request->all());
 
         $cloud_db = DB::connection('Cloud');
         $cloud_db->table(table: 'public.gbh_customer')
@@ -38,7 +37,9 @@ class AuthController extends Controller
             'phone' => $request->mobile,
             'password' => Hash::make($request->password),
             'birth_date' => Carbon::parse($request->birthdate)->format('Y-m-d'),
-            'gender' => $request->gender
+            'gender' => $request->gender,
+            'device_id' => $request->device_id,
+            'device_name' => $request->device_name,
         ]);
 
         if ($request->hasFile('image')) {
@@ -56,6 +57,9 @@ class AuthController extends Controller
         $member_info = $cloud_db->table(table: 'public.gbh_customer')
             ->where('identification_card', $request->idcard)
             ->first();
+
+        $user->branch_code = $member_info->branch_code;
+        $user->save();
 
         $branch_name = $cloud_db->table(table: 'public.master_branch')
             ->where('branch_code', $member_info->branch_code)
@@ -111,6 +115,10 @@ class AuthController extends Controller
 
         $user = $this->model->where('phone', $member_info->mobile)->first();
 
+        if (!$user) {
+            return sendResponse(null, 404, "User not found");
+        }
+
         // if (!$user) {
         //     $user = $this->model->create([
         //         'name' => $member_info->fullname,
@@ -138,6 +146,12 @@ class AuthController extends Controller
             return sendResponse(null, 401, "Wrong password");
         }
         // }
+
+        // $user->device_id = $request->deviceId;
+        // $user->device_name = $request->deviceName;
+        // $user->save();
+
+        generateOtp($user->phone);
 
         Auth::loginUsingId($user->id);
         $token = $user->createToken('auth_token')->plainTextToken;

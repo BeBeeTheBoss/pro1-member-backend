@@ -2,17 +2,25 @@
 
 namespace App\Http\Controllers\Api;
 
+use Exception;
 use Carbon\Carbon;
 use App\Models\User;
+use App\Models\QRCode;
+use App\Models\RequestedOtp;
 use Illuminate\Http\Request;
 use App\Models\UsedCouponLog;
 use App\Models\SelectedCoupon;
+use App\Models\UserNotification;
+use function Laravel\Prompts\info;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use App\Http\Resources\CouponResource;
-use App\Models\QRCode;
+use App\Models\Notification;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Container\Attributes\Log;
+use Illuminate\Support\Facades\Log as FacadesLog;
 
 class UserController extends Controller
 {
@@ -21,6 +29,7 @@ class UserController extends Controller
 
     public function getUser(Request $request)
     {
+
         $cloud_db = DB::connection('Cloud');
         $member_info = $cloud_db->table(table: 'public.gbh_customer')
             ->where('identification_card', $request->idcard)
@@ -31,6 +40,17 @@ class UserController extends Controller
             ->first()->branch_name;
 
         $user = $this->model->where('idcard', $request->idcard)->first();
+
+        if ($request->deviceId && $request->deviceName) {
+
+            if ($user->device_id != $request->deviceId) {
+                sendPushNotification($user->expo_push_token, "System", "Your account has been logged in from another device");
+            }
+
+            $user->device_id = $request->deviceId;
+            $user->device_name = $request->deviceName;
+            $user->save();
+        }
 
         if (!$member_info) {
             return sendResponse(null, 404, "User not found");
@@ -64,10 +84,81 @@ class UserController extends Controller
         return response()->json($users);
     }
 
+    // public function formatPhoneNumber($phone)
+    // {
+    //     $start_number = (substr($phone, 0, 1));
+
+    //     if ($start_number == 0) {
+    //         $formatted_phone_number = "95" . ltrim($phone, "0");
+    //     } else {
+    //         $formatted_phone_number = $phone;
+    //     }
+
+    //     $length = strlen($formatted_phone_number);
+
+    //     // if ($length == 10 || $length == 12) {
+    //     //     return $formatted_phone_number;
+    //     // }
+
+    //     return $formatted_phone_number;
+    // }
+
+    public function resendOtp(Request $request)
+    {
+        generateOtp($request->phone);
+    }
+
+    // public function generateOtp($phone)
+    // {
+    //     $token = env('SMSPoh_TOKEN');
+    //     $end_point = env('SMSPoh_ENDPOINT');
+    //     $formatted_phone_number = $this->formatPhoneNumber($phone);
+    //     $otp = rand(100000, 999999);
+
+    //     FacadesLog::info($formatted_phone_number);
+
+    //     RequestedOtp::where('phone', $phone)->delete();
+
+    //     RequestedOtp::create([
+    //         'phone' => $phone,
+    //         'otp' => $otp,
+    //         'expire_at' => Carbon::now()->addMinutes(5)
+    //     ]);
+
+    //     $this->sendOtp($token, $end_point, $formatted_phone_number, $otp);
+    // }
+
+    // function sendOtp($token, $end_point, $formatted_phone_number, $otp)
+    // {
+
+    //     return Http::withHeaders([
+    //         'Authorization' => 'Bearer ' . $token,
+    //     ])->post($end_point, [
+    //         'to' => $formatted_phone_number,
+    //         'message' => "Your register OTP code is " . $otp . " for PRO 1 MM Member.",
+    //         'from' => 'PRO1 MM'
+    //     ]);
+    // }
+
+    public function verifyOtp(Request $request)
+    {
+
+        $requested_otp_data = RequestedOtp::where('phone', $request->phone)->latest()->first();
+
+        if ($requested_otp_data->otp != $request->otp) {
+            return sendResponse(null, 405, "OTP Code is invalid");
+        }
+
+        if ($requested_otp_data->expire_at < Carbon::now()) {
+            return sendResponse(null, 405, "OTP Code is expired");
+        }
+
+        return sendResponse(null, 200);
+    }
+
 
     public function findMember(Request $request)
     {
-
         $cloud_db = DB::connection('Cloud');
 
         $member_info = $cloud_db->table(table: 'public.gbh_customer')
@@ -85,9 +176,13 @@ class UserController extends Controller
             return sendResponse(null, 404, "Member not found");
         }
 
-        // if($this->model->where('idcard',$member_info->identification_card)->first()) {
-        //     return sendResponse(null, 404, "Member account already exists");
-        // }
+        if ($request->to === 'register') {
+            if ($this->model->where('idcard', $member_info->identification_card)->first()) {
+                return sendResponse(null, 404, "Member account already exists");
+            }
+        }
+
+        generateOtp($member_info->mobile);
 
         return sendResponse($member_info, 200);
     }
@@ -103,6 +198,20 @@ class UserController extends Controller
 
         if (!Hash::check($request->oldPassword, $user->password)) {
             return sendResponse(null, 401, "Wrong password");
+        }
+
+        $user->password = Hash::make($request->newPassword);
+        $user->save();
+
+        return sendResponse(null, 200, "Password changed successfully");
+    }
+
+    public function forgotPassword(Request $request)
+    {
+        $user = $this->model->where('idcard', $request->idcard)->first();
+
+        if (!$user) {
+            return sendResponse(null, 404, "User not found");
         }
 
         $user->password = Hash::make($request->newPassword);
@@ -392,12 +501,10 @@ class UserController extends Controller
 
     public function storePointRedemptionQR(Request $request)
     {
-
-        info($request->qrText);
-
         $qrcode = $request->qrText;
         $timestamp = explode('|', $request->qrText)[0];
-        $user = $this->model->where('idcard', $request->idcard)->first();
+        $idcard = explode('|', $request->qrText)[1];
+        $user = $this->model->where('idcard', $idcard)->first();
 
         QRCode::create([
             'qr_code' => $qrcode,
@@ -405,7 +512,7 @@ class UserController extends Controller
             'user_id' => $user->id
         ]);
 
-        return sendResponse(null, 200);
+        return sendResponse(null, 200,"Store QR Code successfully");
     }
 
     public function storeCouponQR(Request $request)
@@ -415,7 +522,8 @@ class UserController extends Controller
 
         $qrcode = $request->qrText;
         $timestamp = explode(',', $request->qrText)[0];
-        $user = $this->model->where('idcard', $request->idcard)->first();
+        $idcard = explode(',', $request->qrText)[1];
+        $user = $this->model->where('idcard', $idcard)->first();
 
         QRCode::create([
             'qr_code' => $qrcode,
@@ -423,27 +531,44 @@ class UserController extends Controller
             'user_id' => $user->id
         ]);
 
-        return sendResponse(null, 200);
+        return sendResponse(null, 200,"Store QR Code successfully");
     }
 
-
-    public function validatePointRedemptionQR(Request $request)
+    public function checkHashValue($jsonString, $hashValue)
     {
         $secret_key = env('SECRET_KEY');
 
-        $qrCode = $request->qrCode;
-        $idcard = explode('|', $qrCode)[1];
-        $user = $this->model->where('idcard', $idcard)->first();
-        $timestamp = $request->timestamp;
+        $payload = $jsonString . $secret_key;
 
-        // Build exact string that generator used
-        $payload = '{"qrCode":"' . $qrCode . '","timestamp":"' . $timestamp . '"}' . $secret_key;
-
-        // SHA-256 hash (not HMAC)
         $calculatedHash = hash('sha256', $payload);
 
         // Compare
-        if (! hash_equals($calculatedHash, $request->hashValue)) {
+        if (! hash_equals($calculatedHash, $hashValue)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function validatePointRedemptionQR(Request $request)
+    {
+
+        $qrCode = $request->qrCode;
+        $idcard = explode('|', $qrCode)[1];
+        info($idcard);
+        $user = $this->model->where('idcard', $idcard)->first();
+        if(!$user){
+            return response()->json([
+                'responseCode' => '0',
+                'responseMessage' => 'Member Card No is invalid',
+            ]);
+        }
+        $timestamp = $request->timestamp;
+
+        // Build exact string that generator used
+        $jsonString = json_encode($request->except('hashValue'));
+
+        if (!$this->checkHashValue($jsonString, $request->hashValue)) {
             return response()->json([
                 'responseCode' => '0',
                 'responseMessage' => 'Hash value is invalid'
@@ -490,21 +615,21 @@ class UserController extends Controller
 
     public function validateCouponQR(Request $request)
     {
-        $secret_key = env('SECRET_KEY');
-
         $qrCode = $request->qrCode;
         $idcard = explode(',', $qrCode)[1];
         $user = $this->model->where('idcard', $idcard)->first();
+        if(!$user){
+            return response()->json([
+                'responseCode' => '0',
+                'responseMessage' => 'Member Card No is invalid',
+            ]);
+        }
         $timestamp = $request->timestamp;
 
         // Build exact string that generator used
-        $payload = '{"qrCode":"' . $qrCode . '","timestamp":"' . $timestamp . '"}' . $secret_key;
+        $jsonString = json_encode($request->except('hashValue'));
 
-        // SHA-256 hash (not HMAC)
-        $calculatedHash = hash('sha256', $payload);
-
-        // Compare
-        if (! hash_equals($calculatedHash, $request->hashValue)) {
+        if (!$this->checkHashValue($jsonString, $request->hashValue)) {
             return response()->json([
                 'responseCode' => '0',
                 'responseMessage' => 'Hash value is invalid'
@@ -549,7 +674,327 @@ class UserController extends Controller
         ]);
     }
 
-    public function setPushToken(Request $request){
+    public function sendReceivePointNotification(Request $request)
+    {
+        $user = $this->model->where('idcard', $request->memberCardNo)->first();
+        if (!$user) {
+            return response()->json([
+                'responseCode' => '0',
+                'responseMessage' => 'Member Card No is invalid'
+            ]);
+        }
+
+        $jsonString = json_encode($request->except('hashValue'));
+
+        if (!$this->checkHashValue($jsonString, $request->hashValue)) {
+            return response()->json([
+                'responseCode' => '0',
+                'responseMessage' => 'Hash value is invalid'
+            ]);
+        }
+
+        $noti_title = "Point Received";
+        $noti_message = "Congratulations! You have received " . $request->receivePoint;
+
+        DB::beginTransaction();
+        try {
+
+            $notification = Notification::create([
+                'title' => $noti_title,
+                'message' => $noti_message,
+                'recipient' => 'specific'
+            ]);
+
+            UserNotification::create([
+                'user_id' => $user->id,
+                'notification_id' => $notification->id,
+            ]);
+
+            DB::commit();
+            sendPushNotification($user->expo_push_token, $noti_title, $noti_message);
+            return response()->json([
+                "responseCode" => "1",
+                "responseMessage" => "Notification is sent successfully"
+            ]);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                "responseCode" => "0",
+                "responseMessage" => "Failed to send notification"
+            ]);
+        }
+    }
+
+    public function sendClaimPointNotification(Request $request)
+    {
+
+        $user = $this->model->where('idcard', $request->memberCardNo)->first();
+        if (!$user) {
+            return response()->json([
+                'responseCode' => '0',
+                'responseMessage' => 'Member Card No is invalid'
+            ]);
+        }
+
+
+        $jsonString = json_encode($request->except('hashValue'));
+
+        if (!$this->checkHashValue($jsonString, $request->hashValue)) {
+            return response()->json([
+                'responseCode' => '0',
+                'responseMessage' => 'Hash value is invalid'
+            ]);
+        }
+
+        $noti_title = "Point Claimed";
+        $noti_message = "Congratulations! You have claimed " . $request->claimPoint;
+
+        DB::beginTransaction();
+        try {
+
+            $notification = Notification::create([
+                'title' => $noti_title,
+                'message' => $noti_message,
+                'recipient' => 'specific'
+            ]);
+
+            UserNotification::create([
+                'user_id' => $user->id,
+                'notification_id' => $notification->id,
+            ]);
+
+            DB::commit();
+            sendPushNotification($user->expo_push_token, $noti_title, $noti_message);
+            return response()->json([
+                "responseCode" => "1",
+                "responseMessage" => "Notification is sent successfully"
+            ]);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                "responseCode" => "0",
+                "responseMessage" => "Failed to send notification"
+            ]);
+        }
+    }
+
+    public function sendTransferPointNotification(Request $request)
+    {
+
+        $transferer = $this->model->where('idcard', $request->senderMemberCardNo)->first();
+        $receiver = $this->model->where('idcard', $request->receiverMemberCardNo)->first();
+
+        if (!$transferer) {
+            return response()->json([
+                'responseCode' => '0',
+                'responseMessage' => 'Sender Member Card No is invalid'
+            ]);
+        }
+
+        if (!$receiver) {
+            return response()->json([
+                'responseCode' => '0',
+                'responseMessage' => 'Receiver Member Card No is invalid'
+            ]);
+        }
+
+        $jsonString = json_encode($request->except('hashValue'));
+
+        if (!$this->checkHashValue($jsonString, $request->hashValue)) {
+            return response()->json([
+                'responseCode' => '0',
+                'responseMessage' => 'Hash value is invalid'
+            ]);
+        }
+
+        $noti_title_for_transferer = "Point Transfer";
+        $noti_message_for_transferer = "Congratulations! You have transferred " . $request->transferPoint . " points to " . $receiver->name;
+
+        $noti_title_for_receiver = "Point Received";
+        $noti_message_for_receiver = "Congratulations! You have received " . $request->transferPoint . " points from " . $transferer->name;
+
+        DB::beginTransaction();
+        try {
+
+            $notification_for_transferer = Notification::create([
+                'title' => $noti_title_for_transferer,
+                'message' => $noti_message_for_transferer,
+                'recipient' => 'specific'
+            ]);
+
+            UserNotification::create([
+                'user_id' => $transferer->id,
+                'notification_id' => $notification_for_transferer->id,
+            ]);
+
+            $notification_for_receiver = Notification::create([
+                'title' => $noti_title_for_receiver,
+                'message' => $noti_message_for_receiver,
+                'recipient' => 'specific'
+            ]);
+
+            UserNotification::create([
+                'user_id' => $receiver->id,
+                'notification_id' => $notification_for_receiver->id,
+            ]);
+
+            DB::commit();
+            sendPushNotification($transferer->expo_push_token, $noti_title_for_transferer, $noti_message_for_transferer);
+            sendPushNotification($receiver->expo_push_token, $noti_title_for_receiver, $noti_message_for_receiver);
+            return response()->json([
+                "responseCode" => "1",
+                "responseMessage" => "Notification is sent successfully"
+            ]);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                "responseCode" => "0",
+                "responseMessage" => "Failed to send notification"
+            ]);
+        }
+    }
+
+    public function sendUsePointNotification(Request $request)
+    {
+
+        $user = $this->model->where('idcard', $request->memberCardNo)->first();
+        if (!$user) {
+            return response()->json([
+                'responseCode' => '0',
+                'responseMessage' => 'Member Card No is invalid'
+            ]);
+        }
+
+
+        $jsonString = json_encode($request->except('hashValue'));
+
+        if (!$this->checkHashValue($jsonString, $request->hashValue)) {
+            return response()->json([
+                'responseCode' => '0',
+                'responseMessage' => 'Hash value is invalid'
+            ]);
+        }
+
+        $noti_title = "Point Used";
+        $noti_message = "You have used " . $request->usePoint . " points to redeem " . $request->promotionName;
+
+        DB::beginTransaction();
+        try {
+
+            $notification = Notification::create([
+                'title' => $noti_title,
+                'message' => $noti_message,
+                'recipient' => 'specific'
+            ]);
+
+            UserNotification::create([
+                'user_id' => $user->id,
+                'notification_id' => $notification->id,
+            ]);
+
+            DB::commit();
+            sendPushNotification($user->expo_push_token, $noti_title, $noti_message);
+            return response()->json([
+                "responseCode" => "1",
+                "responseMessage" => "Notification is sent successfully"
+            ]);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                "responseCode" => "0",
+                "responseMessage" => "Failed to send notification"
+            ]);
+        }
+    }
+
+    public function getNotiUsersByBranch($branch_code)
+    {
+
+        $tokens_to_send = [];
+        $user_ids = [];
+
+        $users = $this->model->where('branch_code', $branch_code)->where('expo_push_token', '!=', null)->get();
+
+        foreach ($users as $user) {
+
+            if ($user) {
+                array_push($tokens_to_send, $user->expo_push_token);
+                array_push($user_ids, $user->id);
+            }
+        }
+
+        return [
+            'tokens_to_send' => $tokens_to_send,
+            'user_ids' => $user_ids
+        ];
+    }
+
+    public function sendNewPointRedemptionProgramNotification(Request $request)
+    {
+
+        $jsonString = json_encode($request->except('hashValue'));
+
+        if (!$this->checkHashValue($jsonString, $request->hashValue)) {
+            return response()->json([
+                'responseCode' => '0',
+                'responseMessage' => 'Hash value is invalid'
+            ]);
+        }
+
+        $pos_db = getPosDBConnectionByBranchCode('MM-101');
+
+        $promotion = $pos_db->table('gold_exchange.point_exchange_promotion')->where('point_exchange_promotion_pro_no', $request->promotionRefNo)->first();
+        if (!$promotion) {
+            return response()->json([
+                'responseCode' => '0',
+                'responseMessage' => 'Promotion Ref No is invalid'
+            ]);
+        }
+
+        $promotion_id = $promotion->point_exchange_promotion_id;
+
+        $data = $this->getNotiUsersByBranch($request->branchCode);
+
+        $tokens_to_send = $data['tokens_to_send'];
+        $user_ids = $data['user_ids'];
+
+        $noti_title = "New Point Redemption Program";
+        $noti_message = $request->promotionName . " is now available!";
+
+        DB::beginTransaction();
+        try {
+
+            $notification = Notification::create([
+                'title' => $noti_title,
+                'message' => $noti_message,
+                'recipient' => 'all',
+                'route_to' => 'promotion_id:' . $promotion_id
+            ]);
+
+            foreach ($user_ids as $user_id) {
+                UserNotification::create([
+                    'user_id' => $user_id,
+                    'notification_id' => $notification->id,
+                ]);
+            }
+
+            DB::commit();
+            sendPushNotification($tokens_to_send, $noti_title, $noti_message);
+            return response()->json([
+                "responseCode" => "1",
+                "responseMessage" => "Notification is sent successfully"
+            ]);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                "responseCode" => "0",
+                "responseMessage" => "Failed to send notification"
+            ]);
+        }
+    }
+
+    public function setPushToken(Request $request)
+    {
         $request->validate([
             'token' => 'required',
             'idcard' => 'required'
@@ -558,7 +1003,16 @@ class UserController extends Controller
         $this->model->where('idcard', $request->idcard)->update([
             'expo_push_token' => $request->token
         ]);
-
     }
 
+    public function logout(Request $request)
+    {
+        $this->model->where('idcard', $request->idcard)->update([
+            'expo_push_token' => null,
+            'device_id' => null,
+            'device_name' => null
+        ]);
+
+        return sendResponse(null, 200, "Logout successfully");
+    }
 }

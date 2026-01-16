@@ -14,6 +14,8 @@ use App\Http\Controllers\Api\PointTransferController;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register',[AuthController::class, 'register'])->name('register');
+Route::post('/resend-otp',[UserController::class,'resendOtp']);
+Route::post('/verify-otp',[UserController::class,'verifyOtp']);
 
 Route::group(['prefix' => 'users', 'controller' => UserController::class], function () {
     Route::get('/get', 'getUser')->name('getUser');
@@ -21,7 +23,9 @@ Route::group(['prefix' => 'users', 'controller' => UserController::class], funct
     Route::post('/update', 'updateUser')->name('updateUser');
     Route::post('/find-member','findMember')->name('findMember');
     Route::post('/change-password', 'changePassword')->name('changePassword');
+    Route::post('/forgot-password', 'forgotPassword')->name('forgotPassword');
     Route::post('/set-push-token', 'setPushToken')->name('setPushToken');
+    Route::post('/logout', 'logout')->name('logout');
 });
 
 Route::post('/get-points', [UserController::class, 'getPoints'])->name('points');
@@ -57,17 +61,22 @@ Route::group(['prefix' => 'faqs', 'controller' => FAQController::class],function
 
 Route::group(['prefix' => 'notifications', 'controller' => NotificationController::class],function(){
     Route::get('/','index');
-    Route::get('/read','read');
+    Route::post('/read','read');
+    Route::get('/{id}','show');
+    Route::post('/mark-all-as-read','markAllAsRead');
 });
 
-//QR
-// Route::group(['prefix' => 'qr', 'controller' => UserController::class],function(){
-//     Route::store('/')
-// });
 Route::post('/storePointRedemptionQR', [UserController::class, 'storePointRedemptionQR'])->name('storePointRedemptionQR');
 Route::post('/validatePointRedemptionQR', [UserController::class, 'validatePointRedemptionQR'])->name('validatePointRedemptionQR');
 Route::post('/storeCouponQR', [UserController::class, 'storeCouponQR'])->name('storeCouponQR');
 Route::post('/validateCouponQR', [UserController::class, 'validateCouponQR'])->name('validateCouponQR');
+
+Route::post('/sendReceivePointNotification', [UserController::class, 'sendReceivePointNotification'])->name('sendReceivePointNotification');
+Route::post('/sendClaimPointNotification', [UserController::class, 'sendClaimPointNotification'])->name('sendClaimPointNotification');
+Route::post('/sendTransferPointNotification', [UserController::class, 'sendTransferPointNotification'])->name('sendTransferPointNotification');
+Route::post('/sendUsePointNotification', [UserController::class, 'sendUsePointNotification'])->name('sendUsePointNotification');
+Route::post('/sendNewPointRedemptionProgramNotification', [UserController::class, 'sendNewPointRedemptionProgramNotification'])->name('sendNewPointRedemptionProgramNotification');
+Route::post('/sendNewCouponNotification', [UserController::class, 'sendNewCouponNotification'])->name('sendNewCouponNotification');
 
 Route::get('/user', function (Request $request) {
     return $request->user();

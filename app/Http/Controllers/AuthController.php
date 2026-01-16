@@ -30,8 +30,6 @@ class AuthController extends Controller
     public function login(Request $request)
     {
 
-        info($request->all());
-
         $request->validate([
             'empCode' => 'required',
             'password' => 'required'

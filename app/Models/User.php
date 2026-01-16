@@ -27,7 +27,10 @@ class User extends Authenticatable
         'birth_date',
         'gender',
         'image',
-        'expo_push_token'
+        'expo_push_token',
+        'device_id',
+        'device_name',
+        'branch_code'
     ];
 
     /**

@@ -44,7 +44,8 @@ class NotificationController extends Controller
         $notification = $this->model->create([
             'title' => $request->title,
             'message' => $request->message,
-            'recipient' => $request->choice
+            'recipient' => $request->choice,
+            'is_manual' => true
         ]);
 
         if ($request->hasFile('image')) {
@@ -58,6 +59,8 @@ class NotificationController extends Controller
 
         $users = $request->choice === 'all' ? User::get() : User::where('id', $request->user_id)->get();
 
+        $tokens = [];
+
         foreach ($users as $user) {
 
             UserNotification::create([
@@ -65,16 +68,10 @@ class NotificationController extends Controller
                 'notification_id' => $notification->id
             ]);
 
-            Http::withHeaders([
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-            ])->post('https://exp.host/--/api/v2/push/send', [
-                'to' => $user->expo_push_token,
-                'sound' => 'default',
-                'title' => $request->title,
-                'body' => $request->message ?? '',
-            ]);
+            array_push($tokens, $user->expo_push_token);
         }
+
+        sendPushNotification($tokens, $request->title, $request->message);
 
         return redirect()->route('notifications')->with('success', 'Notification created successfully');
     }

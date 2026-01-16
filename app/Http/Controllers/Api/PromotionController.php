@@ -22,6 +22,8 @@ class PromotionController extends Controller
 
     public function show($id){
 
+        info($id);
+
         $pos_db = getPosDBConnectionByBranchCode('MM-101');
 
         $promotion = $pos_db->table('gold_exchange.point_exchange_promotion_item')
