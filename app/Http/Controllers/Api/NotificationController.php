@@ -15,6 +15,7 @@ class NotificationController extends Controller
 
     public function index(Request $request)
     {
+
         $user = User::where('idcard', $request->idcard)->first();
 
         $notifications = UserNotification::where('user_id', $user->id)
