@@ -617,6 +617,7 @@ class UserController extends Controller
     {
         $qrCode = $request->qrCode;
         $idcard = explode(',', $qrCode)[1];
+        $itemReferenceNo = explode(',', $qrCode)[3];
         $user = $this->model->where('idcard', $idcard)->first();
         if(!$user){
             return response()->json([
@@ -671,6 +672,7 @@ class UserController extends Controller
             'responseMessage' => 'QR Code is valid',
             'memberCardNo' => $user->idcard,
             'phoneNo' => $user->phone,
+            'itemReferenceNo' => $itemReferenceNo
         ]);
     }
 
