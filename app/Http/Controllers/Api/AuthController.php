@@ -28,7 +28,8 @@ class AuthController extends Controller
                 'full_address' => $request->address,
                 'address_slave' => $request->address,
                 'fullname' => $request->fullname,
-                'tax_code' => $request->tax_code
+                'tax_code' => $request->tax_code,
+                'birth_date' => Carbon::parse($request->birthdate)->format('Y-m-d')
             ]);
 
         $user = $this->model->create([
