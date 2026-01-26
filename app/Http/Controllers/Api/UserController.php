@@ -995,6 +995,70 @@ class UserController extends Controller
         }
     }
 
+        public function sendNewCouponNotification(Request $request)
+    {
+
+        $jsonString = json_encode($request->except('hashValue'));
+
+        if (!$this->checkHashValue($jsonString, $request->hashValue)) {
+            return response()->json([
+                'responseCode' => '0',
+                'responseMessage' => 'Hash value is invalid'
+            ]);
+        }
+
+        // $pos_db = getPosDBConnectionByBranchCode('MM-101');
+
+        // $promotion = $pos_db->table('gold_exchange.point_exchange_promotion')->where('point_exchange_promotion_pro_no', $request->promotionRefNo)->first();
+        // if (!$promotion) {
+        //     return response()->json([
+        //         'responseCode' => '0',
+        //         'responseMessage' => 'Promotion Ref No is invalid'
+        //     ]);
+        // }
+
+        // $promotion_id = $promotion->point_exchange_promotion_id;
+
+        $data = $this->getNotiUsersByBranch($request->branchCode);
+
+        $tokens_to_send = $data['tokens_to_send'];
+        $user_ids = $data['user_ids'];
+
+        $noti_title = "New Coupon";
+        $noti_message = $request->couponName . " is now available!";
+
+        DB::beginTransaction();
+        try {
+
+            $notification = Notification::create([
+                'title' => $noti_title,
+                'message' => $noti_message,
+                'recipient' => 'all',
+                'route_to' => 'coupon_id:' . null
+            ]);
+
+            foreach ($user_ids as $user_id) {
+                UserNotification::create([
+                    'user_id' => $user_id,
+                    'notification_id' => $notification->id,
+                ]);
+            }
+
+            DB::commit();
+            sendPushNotification($tokens_to_send, $noti_title, $noti_message);
+            return response()->json([
+                "responseCode" => "1",
+                "responseMessage" => "Notification is sent successfully"
+            ]);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                "responseCode" => "0",
+                "responseMessage" => "Failed to send notification"
+            ]);
+        }
+    }
+
     public function setPushToken(Request $request)
     {
         $request->validate([
