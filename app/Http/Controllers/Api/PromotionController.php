@@ -30,6 +30,8 @@ class PromotionController extends Controller
     {
 
         info($id);
+        info($request->all());
+        $id = explode(',', $id)[0];
 
         $pos_db = getPosDBConnectionByBranchCode('MM-101');
         $cloud_db = DB::connection('Cloud');
@@ -38,7 +40,7 @@ class PromotionController extends Controller
             $promotion = $cloud_db->table('imember_pay.rate_redeem_point')->first();
         } else {
             $promotion = $pos_db->table('gold_exchange.point_exchange_promotion_item')
-                ->where('point_exchange_promotion_id', $id)
+                ->where('point_exchange_promotion_no', $id)
                 ->get();
         }
 

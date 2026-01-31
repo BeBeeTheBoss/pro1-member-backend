@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use App\Models\SelectedCoupon;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use App\Models\Notification;
+use App\Models\UserNotification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
@@ -41,6 +43,7 @@ class AuthController extends Controller
             'gender' => $request->gender,
             'device_id' => $request->device_id,
             'device_name' => $request->device_name,
+            'expo_push_token' => $request->expo_push_token
         ]);
 
         if ($request->hasFile('image')) {
@@ -76,17 +79,33 @@ class AuthController extends Controller
             ->where('coup_type_id', 6)
             ->get();
 
-        SelectedCoupon::create([
-            'user_id' => $user->id,
-            'coupon_id' => $coupon[0]->coup_id,
-            'expiry_date' => $coupon[0]->date_expire,
-            'coupon_type' => $coupon[0]->coup_type_id,
-            'coupon_name' => $coupon[0]->coup_name,
-        ]);
+        // SelectedCoupon::create([
+        //     'user_id' => $user->id,
+        //     'coupon_id' => $coupon[0]->coup_id,
+        //     'expiry_date' => $coupon[0]->date_expire,
+        //     'coupon_type' => $coupon[0]->coup_type_id,
+        //     'coupon_name' => $coupon[0]->coup_name,
+        // ]);
 
         $member_info = (array) $member_info;
         $member_info['user_profile'] = $user;
         $member_info['branch_name'] = $branch_name;
+
+        $noti_title = "System";
+        $noti_message = "Congratulations! You have earned 20 points for your first login.";
+
+        sendPushNotification($request->expo_push_token, $noti_title, $noti_message);
+
+        $notification = Notification::create([
+            'title' => $noti_title,
+            'message' => $noti_message,
+            'recipient' => 'specific'
+        ]);
+
+        UserNotification::create([
+            'user_id' => $user->id,
+            'notification_id' => $notification->id
+        ]);
 
         return sendResponse([
             'user' => $member_info,
