@@ -64,6 +64,7 @@ Route::group(['prefix' => 'notifications', 'controller' => NotificationControlle
     Route::post('/read','read');
     Route::get('/{id}','show');
     Route::post('/mark-all-as-read','markAllAsRead');
+    Route::delete('/{id}','destroy');
 });
 
 Route::post('/storePointRedemptionQR', [UserController::class, 'storePointRedemptionQR'])->name('storePointRedemptionQR');

@@ -76,4 +76,15 @@ class NotificationController extends Controller
 
         return sendResponse(null, 200);
     }
+
+    public function destroy($id){
+
+        $user_noti = UserNotification::find($id);
+        if(!$user_noti){
+            return sendResponse(null, 404, "Notification not found");
+        }
+        $user_noti->delete();
+        return sendResponse(null, 200, "Notification deleted successfully");
+    }
+
 }
