@@ -177,6 +177,10 @@ class AuthController extends Controller
             return sendResponse(null, 404, "User not found");
         }
 
+        if($user->is_active == false) {
+            return sendResponse(null, 404, "User account is unactivated");
+        }
+
         // if (!$user) {
         //     $user = $this->model->create([
         //         'name' => $member_info->fullname,
