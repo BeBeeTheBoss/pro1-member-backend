@@ -30,7 +30,8 @@ class User extends Authenticatable
         'expo_push_token',
         'device_id',
         'device_name',
-        'branch_code'
+        'branch_code',
+        'active'
     ];
 
     /**

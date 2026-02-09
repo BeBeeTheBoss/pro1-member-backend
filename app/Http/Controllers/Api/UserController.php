@@ -512,7 +512,7 @@ class UserController extends Controller
             'user_id' => $user->id
         ]);
 
-        return sendResponse(null, 200,"Store QR Code successfully");
+        return sendResponse(null, 200, "Store QR Code successfully");
     }
 
     public function storeCouponQR(Request $request)
@@ -531,7 +531,7 @@ class UserController extends Controller
             'user_id' => $user->id
         ]);
 
-        return sendResponse(null, 200,"Store QR Code successfully");
+        return sendResponse(null, 200, "Store QR Code successfully");
     }
 
     public function checkHashValue($jsonString, $hashValue)
@@ -557,7 +557,7 @@ class UserController extends Controller
         $idcard = explode('|', $qrCode)[1];
         info($idcard);
         $user = $this->model->where('idcard', $idcard)->first();
-        if(!$user){
+        if (!$user) {
             return response()->json([
                 'responseCode' => '0',
                 'responseMessage' => 'Member Card No is invalid',
@@ -619,7 +619,7 @@ class UserController extends Controller
         $idcard = explode(',', $qrCode)[1];
         $itemReferenceNo = explode(',', $qrCode)[3];
         $user = $this->model->where('idcard', $idcard)->first();
-        if(!$user){
+        if (!$user) {
             return response()->json([
                 'responseCode' => '0',
                 'responseMessage' => 'Member Card No is invalid',
@@ -909,6 +909,59 @@ class UserController extends Controller
         }
     }
 
+    public function sendUseCouponNotification(Request $request)
+    {
+
+        $user = $this->model->where('idcard', $request->memberCardNo)->first();
+        if (!$user) {
+            return response()->json([
+                'responseCode' => '0',
+                'responseMessage' => 'Member Card No is invalid'
+            ]);
+        }
+
+
+        $jsonString = json_encode($request->except('hashValue'));
+
+        if (!$this->checkHashValue($jsonString, $request->hashValue)) {
+            return response()->json([
+                'responseCode' => '0',
+                'responseMessage' => 'Hash value is invalid'
+            ]);
+        }
+
+        $noti_title = "Coupon Used";
+        $noti_message = "You have used " . $request->couponName;
+
+        DB::beginTransaction();
+        try {
+
+            $notification = Notification::create([
+                'title' => $noti_title,
+                'message' => $noti_message,
+                'recipient' => 'specific'
+            ]);
+
+            UserNotification::create([
+                'user_id' => $user->id,
+                'notification_id' => $notification->id,
+            ]);
+
+            DB::commit();
+            sendPushNotification($user->expo_push_token, $noti_title, $noti_message);
+            return response()->json([
+                "responseCode" => "1",
+                "responseMessage" => "Notification is sent successfully"
+            ]);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                "responseCode" => "0",
+                "responseMessage" => "Failed to send notification"
+            ]);
+        }
+    }
+
     public function getNotiUsersByBranch($branch_code)
     {
 
@@ -995,7 +1048,7 @@ class UserController extends Controller
         }
     }
 
-        public function sendNewCouponNotification(Request $request)
+    public function sendNewCouponNotification(Request $request)
     {
 
         $jsonString = json_encode($request->except('hashValue'));
@@ -1057,6 +1110,63 @@ class UserController extends Controller
                 "responseMessage" => "Failed to send notification"
             ]);
         }
+    }
+
+    public function toggleActivateMember(Request $request){
+
+        $user = $this->model->where('idcard', $request->idcard)->first();
+        if(!$user){
+            return response()->json([
+                'responseCode' => '0',
+                'responseMessage' => 'Member Card No is invalid'
+            ]);
+        }
+
+        $user->is_active = !$user->is_active;
+        $user->save();
+
+        sendPushNotification($user->expo_push_token,'System', $user->is_active ? 'Member is activated' : 'Member is deactivated');
+
+        return response()->json([
+            'responseCode' => '1',
+            'responseMessage' =>  $user->is_active ? 'Member is activated' : 'Member is deactivated'
+        ]);
+
+    }
+
+    public function updateMemberData(Request $request){
+
+
+        if($request->idcard == null){
+            return response()->json([
+                'responseCode' => '0',
+                'responseMessage' => 'ID Card is required'
+            ]);
+        }
+
+
+        $user = $this->model->where('idcard', $request->idcard)->first();
+        if (!$user) {
+            return response()->json([
+                'responseCode' => '0',
+                'responseMessage' => 'Member Card No is invalid',
+            ]);
+        }
+
+        $user->name = $request->name ?? $user->name;
+        $user->phone = $request->phone ?? $user->phone;
+        $user->birth_date = $request->birth_date ?? $user->birth_date;
+        $user->gender = $request->gender ?? $user->gender;
+        $user->branch_code = $request->branch_code ?? $user->branch_code;
+        $user->save();
+
+        sendPushNotification($user->expo_push_token, "System", "Your member data has been updated");
+
+        return response()->json([
+            'responseCode' => '1',
+            'responseMessage' => 'Member data updated successfully'
+        ]);
+
     }
 
     public function setPushToken(Request $request)

@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\HistoryController;
 use App\Http\Controllers\Api\PromotionController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PointTransferController;
+use Termwind\Components\Raw;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register',[AuthController::class, 'register'])->name('register');
@@ -78,6 +79,10 @@ Route::post('/sendTransferPointNotification', [UserController::class, 'sendTrans
 Route::post('/sendUsePointNotification', [UserController::class, 'sendUsePointNotification'])->name('sendUsePointNotification');
 Route::post('/sendNewPointRedemptionProgramNotification', [UserController::class, 'sendNewPointRedemptionProgramNotification'])->name('sendNewPointRedemptionProgramNotification');
 Route::post('/sendNewCouponNotification', [UserController::class, 'sendNewCouponNotification'])->name('sendNewCouponNotification');
+Route::post('/sendUseCouponNotification', [UserController::class, 'sendUseCouponNotification'])->name('sendUseCouponNotification');
+
+Route::post('/updateMemberData',[UserController::class, 'updateMemberData'])->name('updateMemberData');
+Route::post('/toggleActivateMember',[UserController::class,'toggleActivateMember'])->name('toggleActivateMember');
 
 Route::get('/user', function (Request $request) {
     return $request->user();
