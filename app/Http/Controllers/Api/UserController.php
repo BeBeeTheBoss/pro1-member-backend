@@ -1125,7 +1125,7 @@ class UserController extends Controller
         $user->is_active = !$user->is_active;
         $user->save();
 
-        sendPushNotification($user->expo_push_token,'System', $user->is_active ? 'Member is activated' : 'Member is deactivated');
+        sendPushNotification($user->expo_push_token,'System', $user->is_active ? 'Your account is activated' : 'Your account is deactivated');
 
         return response()->json([
             'responseCode' => '1',
