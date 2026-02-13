@@ -19,7 +19,7 @@ class NotificationController extends Controller
     public function index()
     {
 
-        $notifications = $this->model->latest()->get();
+        $notifications = $this->model->where('is_manual', true)->latest()->get();
 
         $user = Auth::guard('admin')->user();
 

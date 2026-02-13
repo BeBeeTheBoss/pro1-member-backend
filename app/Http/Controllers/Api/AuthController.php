@@ -114,11 +114,7 @@ class AuthController extends Controller
 
             $json['hashValue'] = $calculatedHash;
 
-            info($json);
-
             $response = Http::post("https://memberuat.sdpghc.net:2004/api/coupon/getFirstCoupon", $json);
-
-            info($response);
 
             if ($response['success'] === true) {
                 sendPushNotification($request->expo_push_token, $noti_title, $noti_message);

@@ -35,11 +35,19 @@ class UserController extends Controller
             ->where('identification_card', $request->idcard)
             ->first();
 
+        if(!$member_info){
+            return sendResponse(null, 404, "User not found");
+        }
+
         $branch_name = $cloud_db->table(table: 'public.master_branch')
             ->where('branch_code', $member_info->branch_code)
             ->first()->branch_name;
 
         $user = $this->model->where('idcard', $request->idcard)->first();
+
+        if (!$user) {
+            return sendResponse(null, 404, "User not found");
+        }
 
         if ($request->deviceId && $request->deviceName) {
 
@@ -1087,7 +1095,7 @@ class UserController extends Controller
                 'title' => $noti_title,
                 'message' => $noti_message,
                 'recipient' => 'all',
-                'route_to' => 'coupon_id:' . null
+                'route_to' => 'coupon_id:' . null,
             ]);
 
             foreach ($user_ids as $user_id) {

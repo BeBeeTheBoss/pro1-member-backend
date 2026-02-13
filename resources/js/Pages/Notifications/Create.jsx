@@ -59,6 +59,8 @@ export default function CreateNotification({ user }) {
     const removeImage = () => {
         setData("image", null);
         setImagePreview(null);
+        const fileInput = document.querySelector("input[type=file]");
+        fileInput.value = "";
     };
 
     /* ---------------------------------------------

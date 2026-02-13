@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\HistoryController;
 use App\Http\Controllers\Api\PromotionController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PointTransferController;
+use App\Http\Controllers\Api\PopupController;
 use Termwind\Components\Raw;
 
 Route::post('/login', [AuthController::class, 'login']);
@@ -83,6 +84,8 @@ Route::post('/sendUseCouponNotification', [UserController::class, 'sendUseCoupon
 
 Route::post('/updateMemberData',[UserController::class, 'updateMemberData'])->name('updateMemberData');
 Route::post('/toggleActivateMember',[UserController::class,'toggleActivateMember'])->name('toggleActivateMember');
+
+Route::get('/popups',[PopupController::class, 'index']);
 
 Route::get('/user', function (Request $request) {
     return $request->user();

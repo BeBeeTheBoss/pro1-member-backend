@@ -34,6 +34,7 @@ export default function ModernUI6({
         { label: "Notifications" },
         // { label: "Policies" },
         { label: "FAQs" },
+        { label: "Popups" },
     ];
 
     const handleDelete = (id) => {

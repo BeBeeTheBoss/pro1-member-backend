@@ -10,6 +10,7 @@ use App\Http\Controllers\MemberController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PopupController;
 
 // Route::get('/', function () {
 //     return Inertia::render('Welcome', [
@@ -59,6 +60,15 @@ Route::middleware('admin.auth')->group(function () {
         Route::get('/edit/{id}','edit')->name('notifications.edit');
         Route::post('/update','update')->name('notifications.update');
         Route::delete('/{id}','destroy')->name('notifications.destroy');
+    });
+
+    Route::group(['prefix' => 'popups','controller' => PopupController::class],function(){
+        Route::get('/','index')->name('popups');
+        Route::get('/create','create')->name('popups.create');
+        Route::post('/','store')->name('popups.store');
+        Route::get('/edit/{id}','edit')->name('popups.edit');
+        Route::post('/update','update')->name('popups.update');
+        Route::delete('/{id}','destroy')->name('popups.destroy');
     });
 
 });
