@@ -792,7 +792,7 @@ class UserController extends Controller
     {
 
         $transferer = $this->model->where('idcard', $request->senderMemberCardNo)->first();
-        $receiver = $this->model->where('idcard', $request->receiverMemberCardNo)->first();
+        $receiver = $this->model->where('phone', $request->receiverPhoneNo)->first();
 
         if (!$transferer) {
             return response()->json([
