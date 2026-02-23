@@ -823,6 +823,11 @@ class UserController extends Controller
         $noti_title_for_receiver = "Point Received";
         $noti_message_for_receiver = "Congratulations! You have received " . $request->transferPoint . " points from " . $transferer->name;
 
+        if($request->transferMessage){
+            $noti_title_for_transferer = $noti_title_for_transferer . ' with message "' . $request->transferMessage . '"';
+            $noti_title_for_receiver = $noti_title_for_receiver . ' with message "' . $request->transferMessage . '"';
+        }
+
         DB::beginTransaction();
         try {
 
