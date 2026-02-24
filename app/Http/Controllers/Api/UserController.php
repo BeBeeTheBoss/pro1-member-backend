@@ -231,14 +231,14 @@ class UserController extends Controller
     public function updateUser(Request $request)
     {
 
-        $cloud_db = DB::connection('Cloud');
+        // $cloud_db = DB::connection('Cloud');
 
-        $cloud_db->table(table: 'public.gbh_customer')
-            ->where('identification_card', $request->idcard)
-            ->update([
-                'address_slave' => $request->address,
-                'full_address' => $request->address
-            ]);
+        // $cloud_db->table(table: 'public.gbh_customer')
+        //     ->where('identification_card', $request->idcard)
+        //     ->update([
+        //         'address_slave' => $request->address,
+        //         'full_address' => $request->address
+        //     ]);
 
         $user = $this->model->where('idcard', $request->idcard)->first();
 
@@ -824,8 +824,8 @@ class UserController extends Controller
         $noti_message_for_receiver = "Congratulations! You have received " . $request->transferPoint . " points from " . $transferer->name;
 
         if($request->transferMessage){
-            $noti_title_for_transferer = $noti_title_for_transferer . ' with message "' . $request->transferMessage . '"';
-            $noti_title_for_receiver = $noti_title_for_receiver . ' with message "' . $request->transferMessage . '"';
+            $noti_message_for_transferer = $noti_message_for_transferer . ' with message "' . $request->transferMessage . '"';
+            $noti_message_for_receiver = $noti_message_for_receiver . ' with message "' . $request->transferMessage . '"';
         }
 
         DB::beginTransaction();
