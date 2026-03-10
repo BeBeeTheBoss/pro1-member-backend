@@ -60,6 +60,10 @@ class UserController extends Controller
             $user->save();
         }
 
+        if($user->is_active == false) {
+            return sendResponse(null, 404, "User account is unactivated");
+        }
+
         if (!$member_info) {
             return sendResponse(null, 404, "User not found");
         }
@@ -408,6 +412,7 @@ class UserController extends Controller
         SelectedCoupon::create([
             'user_id' => $user->id,
             'coupon_id' => $request->coupon_id,
+            'coupon_description' => $coupon->description,
             'coupon_name' => $coupon->coup_name,
             'coupon_type' => $coupon->coup_type_id,
             'expiry_date' => $coupon->date_expire,

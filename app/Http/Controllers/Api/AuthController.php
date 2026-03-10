@@ -95,7 +95,7 @@ class AuthController extends Controller
             $member_info['branch_name'] = $branch_name;
 
             $noti_title = "System";
-            $noti_message = "Congratulations! You have earned 20 points for your first login.";
+            $noti_message = "Congratulations! You received a first login coupon that earns you 20 points.";
 
             $timestamp = Carbon::now()->getTimestamp() * 1000;
 

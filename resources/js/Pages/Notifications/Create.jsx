@@ -1,7 +1,7 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { useForm, Link, router } from "@inertiajs/react";
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 
 export default function CreateNotification({ user }) {
@@ -11,12 +11,14 @@ export default function CreateNotification({ user }) {
             message: "",
             choice: "all", // all | specific
             user_id: "",
+            recipient_file: null,
             image: null,
         });
 
     const [searchTerm, setSearchTerm] = useState("");
     const [searchResults, setSearchResults] = useState([]);
     const [imagePreview, setImagePreview] = useState(null);
+    const imageInputRef = useRef(null);
 
     /* ---------------------------------------------
        USER SEARCH
@@ -59,8 +61,9 @@ export default function CreateNotification({ user }) {
     const removeImage = () => {
         setData("image", null);
         setImagePreview(null);
-        const fileInput = document.querySelector("input[type=file]");
-        fileInput.value = "";
+        if (imageInputRef.current) {
+            imageInputRef.current.value = "";
+        }
     };
 
     /* ---------------------------------------------
@@ -83,6 +86,11 @@ export default function CreateNotification({ user }) {
 
         if (data.choice === "specific" && !data.user_id) {
             setError("user_id", "Please select a user");
+            hasError = true;
+        }
+
+        if (data.choice === "excel" && !data.recipient_file) {
+            setError("recipient_file", "Please upload an Excel or CSV file");
             hasError = true;
         }
 
@@ -197,6 +205,7 @@ export default function CreateNotification({ user }) {
                                     )}
                                 </div>
                                 <input
+                                    ref={imageInputRef}
                                     type="file"
                                     accept="image/*"
                                     onChange={handleImageChange}
@@ -259,7 +268,7 @@ export default function CreateNotification({ user }) {
                                 Send To
                             </label>
                             <div className="flex gap-6">
-                                {["all", "specific"].map((type) => (
+                                {["all", "specific", "excel"].map((type) => (
                                     <label
                                         key={type}
                                         className="flex items-center gap-2 text-white cursor-pointer"
@@ -269,16 +278,15 @@ export default function CreateNotification({ user }) {
                                             value={type}
                                             checked={data.choice === type}
                                             onChange={(e) =>
-                                                setData(
-                                                    "choice",
-                                                    e.target.value
-                                                )
+                                                setData("choice", e.target.value)
                                             }
                                             className="w-4 h-4 accent-indigo-500"
                                         />
                                         {type === "all"
                                             ? "All Users"
-                                            : "Specific User"}
+                                            : type === "specific"
+                                            ? "Specific User"
+                                            : "Excel Imported Users"}
                                     </label>
                                 ))}
                             </div>
@@ -352,6 +360,38 @@ export default function CreateNotification({ user }) {
                                 {errors.user_id && (
                                     <p className="text-red-400 text-xs mt-1">
                                         {errors.user_id}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+
+                        {/* ------------------- EXCEL RECIPIENT FILE ------------------- */}
+                        {data.choice === "excel" && (
+                            <div>
+                                <label className="block text-lg mb-2 text-white">
+                                    Recipient File{" "}
+                                    <span className="text-red-400">*</span>
+                                </label>
+                                <input
+                                    type="file"
+                                    accept=".xlsx,.csv"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0] ?? null;
+                                        setData("recipient_file", file);
+                                    }}
+                                    className={`w-full px-3 py-2 rounded-lg bg-white/10 text-white focus:outline-none focus:ring-2 ${
+                                        errors.recipient_file
+                                            ? "ring-red-500"
+                                            : "focus:ring-indigo-400"
+                                    }`}
+                                />
+                                <p className="text-xs text-gray-300 mt-1">
+                                    Supported columns: <b>phone</b> or{" "}
+                                    <b>idcard</b> (header names are optional).
+                                </p>
+                                {errors.recipient_file && (
+                                    <p className="text-red-400 text-xs mt-1">
+                                        {errors.recipient_file}
                                     </p>
                                 )}
                             </div>
