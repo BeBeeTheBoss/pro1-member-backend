@@ -34,7 +34,8 @@ class User extends Authenticatable
         'active',
         'customer_code',
         'email',
-        'device_type'
+        'device_type',
+        'app_version'
     ];
 
     /**
