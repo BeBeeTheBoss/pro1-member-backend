@@ -23,6 +23,8 @@ class AuthController extends Controller
     public function register(Request $request)
     {
 
+        info($request->all());
+
         DB::beginTransaction();
         try {
             $cloud_db = DB::connection('Cloud');
@@ -46,7 +48,8 @@ class AuthController extends Controller
                 'gender' => $request->gender,
                 'device_id' => $request->device_id,
                 'device_name' => $request->device_name,
-                'expo_push_token' => $request->expo_push_token
+                'expo_push_token' => $request->expo_push_token,
+                'email' => $request->email
             ]);
 
             if ($request->hasFile('image')) {
@@ -66,6 +69,7 @@ class AuthController extends Controller
                 ->first();
 
             $user->branch_code = $member_info->branch_code;
+            $user->customer_code = $member_info->customer_barcode;
             $user->save();
 
             $branch_name = $cloud_db->table(table: 'public.master_branch')
