@@ -27,6 +27,7 @@ Route::group(['prefix' => 'users', 'controller' => UserController::class], funct
     Route::post('/change-password', 'changePassword')->name('changePassword');
     Route::post('/forgot-password', 'forgotPassword')->name('forgotPassword');
     Route::post('/set-push-token', 'setPushToken')->name('setPushToken');
+    Route::post('/set-app-version', 'setAppVersion')->name('setAppVersion');
     Route::post('/logout', 'logout')->name('logout');
 });
 

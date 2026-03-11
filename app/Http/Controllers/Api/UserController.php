@@ -1199,6 +1199,17 @@ class UserController extends Controller
         ]);
     }
 
+    public function setAppVersion(Request $request){
+        $request->validate([
+            'app_version' => 'required',
+            'idcard' => 'required'
+        ]);
+
+        $this->model->where('idcard', $request->idcard)->update([
+            'app_version' => $request->app_version
+        ]);
+    }
+
     public function logout(Request $request)
     {
         $this->model->where('idcard', $request->idcard)->update([
