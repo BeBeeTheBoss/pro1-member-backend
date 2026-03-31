@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PointTransferController;
 use App\Http\Controllers\Api\PopupController;
 use App\Http\Controllers\Api\PromotionController;
+use App\Http\Controllers\Api\PrivilegeController;
+use App\Http\Controllers\Api\PrivilegeCategoryController;
 use App\Http\Controllers\Api\SessionController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +28,7 @@ Route::group(['prefix' => 'users', 'controller' => UserController::class], funct
     Route::post('/forgot-password', 'forgotPassword')->name('forgotPassword');
     // Route::post('/logout', 'logout')->name('logout');
 });
+
 
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -65,6 +68,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', 'index');
     });
 
+
     Route::group(['prefix' => 'faqs', 'controller' => FAQController::class], function () {
         Route::get('/', 'index');
     });
@@ -94,6 +98,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/toggleActivateMember', [UserController::class, 'toggleActivateMember'])->name('toggleActivateMember');
 
     Route::get('/popups', [PopupController::class, 'index']);
+
+    Route::get('/privileges', [PrivilegeController::class, 'index']);
+    Route::get('/privilege-categories', [PrivilegeCategoryController::class, 'index']);
 });
 
 // Route::get('/user', function (Request $request) {

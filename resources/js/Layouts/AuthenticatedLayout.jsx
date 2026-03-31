@@ -35,6 +35,8 @@ export default function ModernUI6({
         // { label: "Policies" },
         { label: "FAQs" },
         { label: "Popups" },
+        { label: "Privileges" },
+        { label: "Privilege-Categories", path: "privilege-categories" },
     ];
 
     const handleDelete = (id) => {
@@ -44,7 +46,7 @@ export default function ModernUI6({
     return (
         <div
             className="min-h-screen p-6 flex gap-6 text-white bg-dark bg-cover bg-center"
-            style={{ backgroundImage: `url(${BackgroundImage})` }}
+            // style={{ backgroundImage: `url(${BackgroundImage})` }}
         >
 
             <motion.aside
@@ -59,7 +61,8 @@ export default function ModernUI6({
                         <motion.div
                             key={item.label}
                             onClick={() => {
-                                router.get("/" + item.label.toLowerCase());
+                                const path = item.path ?? item.label.toLowerCase();
+                                router.get("/" + path);
                             }}
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}

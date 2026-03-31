@@ -11,6 +11,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PopupController;
+use App\Http\Controllers\PrivilegeController;
+use App\Http\Controllers\PrivilegeCategoryController;
 
 // Route::get('/', function () {
 //     return Inertia::render('Welcome', [
@@ -69,6 +71,24 @@ Route::middleware('admin.auth')->group(function () {
         Route::get('/edit/{id}','edit')->name('popups.edit');
         Route::post('/update','update')->name('popups.update');
         Route::delete('/{id}','destroy')->name('popups.destroy');
+    });
+
+    Route::group(['prefix' => 'privileges','controller' => PrivilegeController::class],function(){
+        Route::get('/','index')->name('privileges');
+        Route::get('/create','create')->name('privileges.create');
+        Route::post('/','store')->name('privileges.store');
+        Route::get('/edit/{id}','edit')->name('privileges.edit');
+        Route::post('/update','update')->name('privileges.update');
+        Route::delete('/{id}','destroy')->name('privileges.destroy');
+    });
+
+    Route::group(['prefix' => 'privilege-categories','controller' => PrivilegeCategoryController::class],function(){
+        Route::get('/','index')->name('privilege-categories');
+        Route::get('/create','create')->name('privilege-categories.create');
+        Route::post('/','store')->name('privilege-categories.store');
+        Route::get('/edit/{id}','edit')->name('privilege-categories.edit');
+        Route::post('/update','update')->name('privilege-categories.update');
+        Route::delete('/{id}','destroy')->name('privilege-categories.destroy');
     });
 
 });
