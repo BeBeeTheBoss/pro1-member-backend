@@ -39,6 +39,10 @@ class UserController extends Controller
             return sendResponse(null, 404, "User not found");
         }
 
+        if($member_info->member_active == false){
+            return sendResponse(null, 405, "You are not a member");
+        }
+
         $branch_name = $cloud_db->table(table: 'public.master_branch')
             ->where('branch_code', $member_info->branch_code)
             ->first()->branch_name;
@@ -188,6 +192,10 @@ class UserController extends Controller
             return sendResponse(null, 404, "Member not found");
         }
 
+        if($member_info->member_active == false){
+            return sendResponse(null, 405, "You are not a member");
+        }
+
         if ($request->to === 'register') {
             if ($this->model->where('idcard', $member_info->identification_card)->first()) {
                 return sendResponse(null, 404, "Member account already exists");
@@ -208,11 +216,17 @@ class UserController extends Controller
             return sendResponse(null, 404, "User not found");
         }
 
-        if (!Hash::check($request->oldPassword, $user->password)) {
-            return sendResponse(null, 401, "Wrong password");
+        $incomingHash = hash('sha256', $request->oldPassword);
+        if(!hash_equals((string) $user->password, $incomingHash)){
+
         }
 
-        $user->password = Hash::make($request->newPassword);
+        // if (!Hash::check($request->oldPassword, $user->password)) {
+        //     return sendResponse(null, 401, "Wrong password");
+        // }
+
+        $user->password = hash('sha256', $request->newPassword);
+
         $user->save();
 
         return sendResponse(null, 200, "Password changed successfully");
@@ -226,7 +240,7 @@ class UserController extends Controller
             return sendResponse(null, 404, "User not found");
         }
 
-        $user->password = Hash::make($request->newPassword);
+        $user->password = hash('sha256', $request->newPassword);
         $user->save();
 
         return sendResponse(null, 200, "Password changed successfully");

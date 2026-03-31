@@ -17,15 +17,19 @@ Route::post('/register', [AuthController::class, 'register'])->name('register');
 Route::post('/resend-otp', [UserController::class, 'resendOtp']);
 Route::post('/verify-otp', [UserController::class, 'verifyOtp']);
 
+Route::group(['prefix' => 'users', 'controller' => UserController::class], function () {
+    Route::get('/get', 'getUser')->name('getUser');
+    Route::get('/search', 'searchUser')->name('searchUser');
+    Route::post('/update', 'updateUser')->name('updateUser');
+    Route::post('/find-member', 'findMember')->name('findMember');
+    Route::post('/change-password', 'changePassword')->name('changePassword');
+    Route::post('/forgot-password', 'forgotPassword')->name('forgotPassword');
+    // Route::post('/logout', 'logout')->name('logout');
+});
+
 Route::middleware('auth:sanctum')->group(function () {
 
     Route::group(['prefix' => 'users', 'controller' => UserController::class], function () {
-        Route::get('/get', 'getUser')->name('getUser');
-        Route::get('/search', 'searchUser')->name('searchUser');
-        Route::post('/update', 'updateUser')->name('updateUser');
-        Route::post('/find-member', 'findMember')->name('findMember');
-        Route::post('/change-password', 'changePassword')->name('changePassword');
-        Route::post('/forgot-password', 'forgotPassword')->name('forgotPassword');
         Route::post('/set-push-token', 'setPushToken')->name('setPushToken');
         Route::post('/set-app-version', 'setAppVersion')->name('setAppVersion');
         Route::post('/logout', 'logout')->name('logout');

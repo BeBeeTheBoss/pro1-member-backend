@@ -12,7 +12,6 @@ use App\Models\UserNotification;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
@@ -43,7 +42,7 @@ class AuthController extends Controller
                 'name' => $request->fullname,
                 'idcard' => $request->idcard,
                 'phone' => $request->mobile,
-                'password' => Hash::make($request->password),
+                'password' => hash('sha256', $request->password),
                 'birth_date' => Carbon::parse($request->birthdate)->format('Y-m-d'),
                 'gender' => $request->gender,
                 'device_id' => $request->device_id,
@@ -206,7 +205,12 @@ class AuthController extends Controller
         //         'coupon_name' => $coupon[0]->coup_name,
         //     ]);
         // } else {
-        if (!Hash::check($request->password, $user->password)) {
+
+        $test_password = hash('sha256', "1234");
+        info($test_password);
+
+        $incomingHash = hash('sha256', $request->password);
+        if (!hash_equals((string) $user->password, $incomingHash)) {
             return sendResponse(null, 401, "Wrong password");
         }
         // }
