@@ -14,11 +14,18 @@ class AdminSeeder extends Seeder
     public function run(): void
     {
         $admins = [
+            // [
+            //     'emp_code' => '000-000583',
+            //     'name' => 'BeBee',
+            //     'password' => bcrypt('bebee7121'),
+            //     'role' => 'Senior SD Assistant',
+            //     'department' => 'System Development',
+            // ]
             [
-                'emp_code' => '000-000583',
-                'name' => 'BeBee',
-                'password' => bcrypt('bebee7121'),
-                'role' => 'Senior SD Assistant',
+                'emp_code' => '111-111111',
+                'name' => 'Admin',
+                'password' => bcrypt('admin123'),
+                'role' => 'Super Admin',
                 'department' => 'System Development',
             ]
         ];

@@ -13,6 +13,8 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PopupController;
 use App\Http\Controllers\PrivilegeController;
 use App\Http\Controllers\PrivilegeCategoryController;
+use App\Http\Controllers\EventPlatformController;
+use App\Http\Controllers\EventController;
 
 // Route::get('/', function () {
 //     return Inertia::render('Welcome', [
@@ -89,6 +91,24 @@ Route::middleware('admin.auth')->group(function () {
         Route::get('/edit/{id}','edit')->name('privilege-categories.edit');
         Route::post('/update','update')->name('privilege-categories.update');
         Route::delete('/{id}','destroy')->name('privilege-categories.destroy');
+    });
+
+    Route::group(['prefix' => 'event-platforms','controller' => EventPlatformController::class],function(){
+        Route::get('/','index')->name('event-platforms');
+        Route::get('/create','create')->name('event-platforms.create');
+        Route::post('/','store')->name('event-platforms.store');
+        Route::get('/edit/{id}','edit')->name('event-platforms.edit');
+        Route::post('/update','update')->name('event-platforms.update');
+        Route::delete('/{id}','destroy')->name('event-platforms.destroy');
+    });
+
+    Route::group(['prefix' => 'events','controller' => EventController::class],function(){
+        Route::get('/','index')->name('events');
+        Route::get('/create','create')->name('events.create');
+        Route::post('/','store')->name('events.store');
+        Route::get('/edit/{id}','edit')->name('events.edit');
+        Route::post('/update','update')->name('events.update');
+        Route::delete('/{id}','destroy')->name('events.destroy');
     });
 
 });

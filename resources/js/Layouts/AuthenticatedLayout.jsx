@@ -35,8 +35,10 @@ export default function ModernUI6({
         // { label: "Policies" },
         { label: "FAQs" },
         { label: "Popups" },
-        { label: "Privileges" },
         { label: "Privilege-Categories", path: "privilege-categories" },
+        { label: "Privileges" },
+        { label: "Event-Platforms", path: "event-platforms" },
+        { label: "Events" },
     ];
 
     const handleDelete = (id) => {

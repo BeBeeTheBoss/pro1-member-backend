@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\PopupController;
 use App\Http\Controllers\Api\PromotionController;
 use App\Http\Controllers\Api\PrivilegeController;
 use App\Http\Controllers\Api\PrivilegeCategoryController;
+use App\Http\Controllers\Api\EventController;
+use App\Http\Controllers\Api\DailyRewardController;
 use App\Http\Controllers\Api\SessionController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
@@ -29,6 +31,8 @@ Route::group(['prefix' => 'users', 'controller' => UserController::class], funct
     // Route::post('/logout', 'logout')->name('logout');
 });
 
+    Route::get('/events', [EventController::class, 'index']);
+
 
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -40,6 +44,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/session/start', [SessionController::class, 'startSession']);
     Route::post('/session/end', [SessionController::class, 'endSession']);
+    Route::post('/daily-rewards/claim', [DailyRewardController::class, 'claim']);
 
     Route::post('/get-points', [UserController::class, 'getPoints'])->name('points');
 

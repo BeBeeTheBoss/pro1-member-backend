@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -35,7 +36,11 @@ class User extends Authenticatable
         'customer_code',
         'email',
         'device_type',
-        'app_version'
+        'app_version',
+        'streak_challenge_count',
+        'current_streak',
+        'used_keys',
+        'keys'
     ];
 
     /**
@@ -59,5 +64,10 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             // 'password' => 'hashed',
         ];
+    }
+
+    public function dailyRewards(): HasMany
+    {
+        return $this->hasMany(DailyReward::class);
     }
 }
