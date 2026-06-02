@@ -15,6 +15,8 @@ use App\Http\Controllers\PrivilegeController;
 use App\Http\Controllers\PrivilegeCategoryController;
 use App\Http\Controllers\EventPlatformController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\GamesEventController;
+use App\Http\Controllers\SpinWheelChanceController;
 
 // Route::get('/', function () {
 //     return Inertia::render('Welcome', [
@@ -109,6 +111,24 @@ Route::middleware('admin.auth')->group(function () {
         Route::get('/edit/{id}','edit')->name('events.edit');
         Route::post('/update','update')->name('events.update');
         Route::delete('/{id}','destroy')->name('events.destroy');
+    });
+
+    Route::group(['prefix' => 'games-events', 'controller' => GamesEventController::class], function () {
+        Route::get('/', 'index')->name('games-events');
+        Route::get('/create', 'create')->name('games-events.create');
+        Route::post('/', 'store')->name('games-events.store');
+        Route::get('/edit/{id}', 'edit')->name('games-events.edit');
+        Route::post('/update', 'update')->name('games-events.update');
+        Route::delete('/{id}', 'destroy')->name('games-events.destroy');
+    });
+
+    Route::group(['prefix' => 'spin-wheel-chances', 'controller' => SpinWheelChanceController::class], function () {
+        Route::get('/', 'index')->name('spin-wheel-chances');
+        Route::get('/create', 'create')->name('spin-wheel-chances.create');
+        Route::post('/', 'store')->name('spin-wheel-chances.store');
+        Route::get('/edit/{id}', 'edit')->name('spin-wheel-chances.edit');
+        Route::post('/update', 'update')->name('spin-wheel-chances.update');
+        Route::delete('/{id}', 'destroy')->name('spin-wheel-chances.destroy');
     });
 
 });

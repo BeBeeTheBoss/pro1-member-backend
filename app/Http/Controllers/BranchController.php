@@ -39,6 +39,19 @@ class BranchController extends Controller
 
     public function store(Request $request)
     {
+        $request->validate([
+            'branch_code' => ['required', 'string', 'max:255', 'unique:branches,branch_code'],
+            'name' => ['required', 'string', 'max:255'],
+            'address' => ['required', 'string'],
+            'contact' => ['required', 'string', 'max:255'],
+            'opening_time' => ['required'],
+            'closing_time' => ['required'],
+            'latitude' => ['required'],
+            'longitude' => ['required'],
+            'region' => ['required', 'string', 'max:255'],
+            'township' => ['required', 'string', 'max:255'],
+            'image' => ['required', 'file', 'extensions:jpg,jpeg,png,webp'],
+        ]);
 
         $branch = $this->model->create($request->except('image'));
 
@@ -66,6 +79,20 @@ class BranchController extends Controller
     }
 
     public function update(Request $request){
+        $request->validate([
+            'id' => ['required', 'exists:branches,id'],
+            'branch_code' => ['required', 'string', 'max:255', 'unique:branches,branch_code,' . $request->id],
+            'name' => ['required', 'string', 'max:255'],
+            'address' => ['required', 'string'],
+            'contact' => ['required', 'string', 'max:255'],
+            'opening_time' => ['required'],
+            'closing_time' => ['required'],
+            'latitude' => ['required'],
+            'longitude' => ['required'],
+            'region' => ['required', 'string', 'max:255'],
+            'township' => ['required', 'string', 'max:255'],
+            'image' => ['nullable'],
+        ]);
 
         $branch = $this->model->find($request->id);
 

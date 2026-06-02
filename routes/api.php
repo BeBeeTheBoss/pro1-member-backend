@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BranchController;
+use App\Http\Controllers\Api\ClaimedKeyController;
 use App\Http\Controllers\Api\FAQController;
 use App\Http\Controllers\Api\HistoryController;
 use App\Http\Controllers\Api\NotificationController;
@@ -12,7 +13,9 @@ use App\Http\Controllers\Api\PrivilegeController;
 use App\Http\Controllers\Api\PrivilegeCategoryController;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\DailyRewardController;
+use App\Http\Controllers\Api\GamesEventController;
 use App\Http\Controllers\Api\SessionController;
+use App\Http\Controllers\Api\SpinWheelChanceController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -20,6 +23,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register'])->name('register');
 Route::post('/resend-otp', [UserController::class, 'resendOtp']);
 Route::post('/verify-otp', [UserController::class, 'verifyOtp']);
+Route::get('/games-events', [GamesEventController::class, 'index']);
 
 Route::group(['prefix' => 'users', 'controller' => UserController::class], function () {
     Route::get('/get', 'getUser')->name('getUser');
@@ -31,7 +35,10 @@ Route::group(['prefix' => 'users', 'controller' => UserController::class], funct
     // Route::post('/logout', 'logout')->name('logout');
 });
 
-    Route::get('/events', [EventController::class, 'index']);
+Route::get('/events', [EventController::class, 'index']);
+
+Route::get('/spin-wheel-chances', [SpinWheelChanceController::class, 'index']);
+
 
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -45,6 +52,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/session/start', [SessionController::class, 'startSession']);
     Route::post('/session/end', [SessionController::class, 'endSession']);
     Route::post('/daily-rewards/claim', [DailyRewardController::class, 'claim']);
+    Route::get('/claimed-keys', [ClaimedKeyController::class, 'get']);
+    Route::post('/claimed-keys', [ClaimedKeyController::class, 'store']);
 
     Route::post('/get-points', [UserController::class, 'getPoints'])->name('points');
 
@@ -86,27 +95,31 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/{id}', 'destroy');
     });
 
-    Route::post('/storePointRedemptionQR', [UserController::class, 'storePointRedemptionQR'])->name('storePointRedemptionQR');
-    Route::post('/validatePointRedemptionQR', [UserController::class, 'validatePointRedemptionQR'])->name('validatePointRedemptionQR');
-    Route::post('/storeCouponQR', [UserController::class, 'storeCouponQR'])->name('storeCouponQR');
-    Route::post('/validateCouponQR', [UserController::class, 'validateCouponQR'])->name('validateCouponQR');
-
-    Route::post('/sendReceivePointNotification', [UserController::class, 'sendReceivePointNotification'])->name('sendReceivePointNotification');
-    Route::post('/sendClaimPointNotification', [UserController::class, 'sendClaimPointNotification'])->name('sendClaimPointNotification');
-    Route::post('/sendTransferPointNotification', [UserController::class, 'sendTransferPointNotification'])->name('sendTransferPointNotification');
-    Route::post('/sendUsePointNotification', [UserController::class, 'sendUsePointNotification'])->name('sendUsePointNotification');
-    Route::post('/sendNewPointRedemptionProgramNotification', [UserController::class, 'sendNewPointRedemptionProgramNotification'])->name('sendNewPointRedemptionProgramNotification');
-    Route::post('/sendNewCouponNotification', [UserController::class, 'sendNewCouponNotification'])->name('sendNewCouponNotification');
-    Route::post('/sendUseCouponNotification', [UserController::class, 'sendUseCouponNotification'])->name('sendUseCouponNotification');
-
-    Route::post('/updateMemberData', [UserController::class, 'updateMemberData'])->name('updateMemberData');
-    Route::post('/toggleActivateMember', [UserController::class, 'toggleActivateMember'])->name('toggleActivateMember');
-
     Route::get('/popups', [PopupController::class, 'index']);
 
     Route::get('/privileges', [PrivilegeController::class, 'index']);
     Route::get('/privilege-categories', [PrivilegeCategoryController::class, 'index']);
+
+    Route::post('/spin-wheel-play', [SpinWheelChanceController::class, 'play']);
+
 });
+
+Route::post('/storePointRedemptionQR', [UserController::class, 'storePointRedemptionQR'])->name('storePointRedemptionQR');
+Route::post('/validatePointRedemptionQR', [UserController::class, 'validatePointRedemptionQR'])->name('validatePointRedemptionQR');
+Route::post('/storeCouponQR', [UserController::class, 'storeCouponQR'])->name('storeCouponQR');
+Route::post('/validateCouponQR', [UserController::class, 'validateCouponQR'])->name('validateCouponQR');
+
+Route::post('/sendReceivePointNotification', [UserController::class, 'sendReceivePointNotification'])->name('sendReceivePointNotification');
+Route::post('/sendClaimPointNotification', [UserController::class, 'sendClaimPointNotification'])->name('sendClaimPointNotification');
+Route::post('/sendTransferPointNotification', [UserController::class, 'sendTransferPointNotification'])->name('sendTransferPointNotification');
+Route::post('/sendUsePointNotification', [UserController::class, 'sendUsePointNotification'])->name('sendUsePointNotification');
+Route::post('/sendNewPointRedemptionProgramNotification', [UserController::class, 'sendNewPointRedemptionProgramNotification'])->name('sendNewPointRedemptionProgramNotification');
+Route::post('/sendNewCouponNotification', [UserController::class, 'sendNewCouponNotification'])->name('sendNewCouponNotification');
+Route::post('/sendUseCouponNotification', [UserController::class, 'sendUseCouponNotification'])->name('sendUseCouponNotification');
+Route::post('/sendSpinWheelPointNotification', [UserController::class, 'sendSpinWheelPointNotification'])->name('sendSpinWheelPointNotification');
+
+Route::post('/updateMemberData', [UserController::class, 'updateMemberData'])->name('updateMemberData');
+Route::post('/toggleActivateMember', [UserController::class, 'toggleActivateMember'])->name('toggleActivateMember');
 
 // Route::get('/user', function (Request $request) {
 //     return $request->user();

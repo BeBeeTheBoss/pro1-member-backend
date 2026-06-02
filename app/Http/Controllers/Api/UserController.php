@@ -35,11 +35,11 @@ class UserController extends Controller
             ->where('identification_card', $request->idcard)
             ->first();
 
-        if(!$member_info){
+        if (!$member_info) {
             return sendResponse(null, 404, "User not found");
         }
 
-        if($member_info->member_active == false){
+        if ($member_info->member_active == false) {
             return sendResponse(null, 405, "You are not a member");
         }
 
@@ -64,7 +64,7 @@ class UserController extends Controller
             $user->save();
         }
 
-        if($user->is_active == false) {
+        if ($user->is_active == false) {
             return sendResponse(null, 404, "User account is unactivated");
         }
 
@@ -192,7 +192,7 @@ class UserController extends Controller
             return sendResponse(null, 404, "Member not found");
         }
 
-        if($member_info->member_active == false){
+        if ($member_info->member_active == false) {
             return sendResponse(null, 405, "You are not a member");
         }
 
@@ -217,8 +217,7 @@ class UserController extends Controller
         }
 
         $incomingHash = hash('sha256', $request->oldPassword);
-        if(!hash_equals((string) $user->password, $incomingHash)){
-
+        if (!hash_equals((string) $user->password, $incomingHash)) {
         }
 
         // if (!Hash::check($request->oldPassword, $user->password)) {
@@ -842,7 +841,7 @@ class UserController extends Controller
         $noti_title_for_receiver = "Point Received";
         $noti_message_for_receiver = "Congratulations! You have received " . $request->transferPoint . " points from " . $transferer->name;
 
-        if($request->transferMessage){
+        if ($request->transferMessage) {
             $noti_message_for_transferer = $noti_message_for_transferer . ' with message "' . $request->transferMessage . '"';
             $noti_message_for_receiver = $noti_message_for_receiver . ' with message "' . $request->transferMessage . '"';
         }
@@ -964,6 +963,59 @@ class UserController extends Controller
 
         $noti_title = "Coupon Used";
         $noti_message = "You have used " . $request->couponName;
+
+        DB::beginTransaction();
+        try {
+
+            $notification = Notification::create([
+                'title' => $noti_title,
+                'message' => $noti_message,
+                'recipient' => 'specific'
+            ]);
+
+            UserNotification::create([
+                'user_id' => $user->id,
+                'notification_id' => $notification->id,
+            ]);
+
+            DB::commit();
+            sendPushNotification($user->expo_push_token, $noti_title, $noti_message);
+            return response()->json([
+                "responseCode" => "1",
+                "responseMessage" => "Notification is sent successfully"
+            ]);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                "responseCode" => "0",
+                "responseMessage" => "Failed to send notification"
+            ]);
+        }
+    }
+
+    public function sendSpinWheelPointNotification(Request $request)
+    {
+
+        $user = $this->model->where('idcard', $request->memberCardNo)->first();
+        if (!$user) {
+            return response()->json([
+                'responseCode' => '0',
+                'responseMessage' => 'Member Card No is invalid'
+            ]);
+        }
+
+
+        $jsonString = json_encode($request->except('hashValue'));
+
+        if (!$this->checkHashValue($jsonString, $request->hashValue)) {
+            return response()->json([
+                'responseCode' => '0',
+                'responseMessage' => 'Hash value is invalid'
+            ]);
+        }
+
+        $noti_title = "Point Received";
+        $noti_message = "You have received " . $request->pointAmount . " points from Spin Wheel Event";
 
         DB::beginTransaction();
         try {
@@ -1144,10 +1196,11 @@ class UserController extends Controller
         }
     }
 
-    public function toggleActivateMember(Request $request){
+    public function toggleActivateMember(Request $request)
+    {
 
         $user = $this->model->where('idcard', $request->idcard)->first();
-        if(!$user){
+        if (!$user) {
             return response()->json([
                 'responseCode' => '0',
                 'responseMessage' => 'Member Card No is invalid'
@@ -1157,19 +1210,19 @@ class UserController extends Controller
         $user->is_active = !$user->is_active;
         $user->save();
 
-        sendPushNotification($user->expo_push_token,'System', $user->is_active ? 'Your account is activated' : 'Your account is deactivated');
+        sendPushNotification($user->expo_push_token, 'System', $user->is_active ? 'Your account is activated' : 'Your account is deactivated');
 
         return response()->json([
             'responseCode' => '1',
             'responseMessage' =>  $user->is_active ? 'Member is activated' : 'Member is deactivated'
         ]);
-
     }
 
-    public function updateMemberData(Request $request){
+    public function updateMemberData(Request $request)
+    {
 
 
-        if($request->idcard == null){
+        if ($request->idcard == null) {
             return response()->json([
                 'responseCode' => '0',
                 'responseMessage' => 'ID Card is required'
@@ -1198,7 +1251,6 @@ class UserController extends Controller
             'responseCode' => '1',
             'responseMessage' => 'Member data updated successfully'
         ]);
-
     }
 
     public function setPushToken(Request $request)
@@ -1213,7 +1265,8 @@ class UserController extends Controller
         ]);
     }
 
-    public function setAppVersion(Request $request){
+    public function setAppVersion(Request $request)
+    {
         $request->validate([
             'app_version' => 'required',
             'idcard' => 'required'

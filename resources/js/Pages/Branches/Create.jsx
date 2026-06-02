@@ -48,6 +48,7 @@ function LocationPicker({ lat, lng, setLat, setLng }) {
 export default function Create({ user }) {
     const [preview, setPreview] = useState(null);
     const [form, setForm] = useState({
+        branch_code: "",
         name: "",
         address: "",
         contact: "",
@@ -91,6 +92,7 @@ export default function Create({ user }) {
 
         const newErrors = {};
 
+        if (!form.branch_code.trim()) newErrors.branch_code = "Branch code is required";
         if (!form.name.trim()) newErrors.name = "Name is required";
         if (!form.address.trim()) newErrors.address = "Address is required";
         if (!form.contact.trim()) newErrors.contact = "Contact is required";
@@ -196,6 +198,25 @@ export default function Create({ user }) {
 
                     {/* Form Inputs */}
                     <div className="col-span-2 bg-white/10 p-6 rounded-2xl space-y-4">
+                        {/* Branch Code */}
+                        <div>
+                            <label className="block text-white font-medium mb-1">
+                                Branch Code
+                            </label>
+                            <input
+                                type="text"
+                                name="branch_code"
+                                value={form.branch_code}
+                                onChange={handleChange}
+                                className="w-full px-4 py-2 rounded-lg bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                            />
+                            {errors.branch_code && (
+                                <p className="text-[#ff2111ff] mt-1 text-sm">
+                                    {errors.branch_code}
+                                </p>
+                            )}
+                        </div>
+
                         {/* Name */}
                         <div>
                             <label className="block text-white font-medium mb-1">

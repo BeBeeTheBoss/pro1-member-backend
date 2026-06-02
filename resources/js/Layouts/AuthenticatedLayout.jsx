@@ -39,6 +39,8 @@ export default function ModernUI6({
         { label: "Privileges" },
         { label: "Event-Platforms", path: "event-platforms" },
         { label: "Events" },
+        { label: "Games-Events", path: "games-events" },
+        { label: "Spin-Wheel-Chances", path: "spin-wheel-chances" },
     ];
 
     const handleDelete = (id) => {
@@ -47,7 +49,7 @@ export default function ModernUI6({
 
     return (
         <div
-            className="min-h-screen p-6 flex gap-6 text-white bg-dark bg-cover bg-center"
+            className="h-screen p-6 flex gap-6 text-white bg-dark bg-cover bg-center overflow-hidden"
             // style={{ backgroundImage: `url(${BackgroundImage})` }}
         >
 
@@ -55,10 +57,10 @@ export default function ModernUI6({
                 initial={{ x: -50, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ type: "spring", stiffness: 100, damping: 15 }}
-                className="bg-white/5 backdrop-blur-2xl border border-white/10 shadow-lg rounded-3xl py-5 px-4 flex flex-col overflow-hidden"
+                className="h-full shrink-0 bg-white/5 backdrop-blur-2xl border border-white/10 shadow-lg rounded-3xl py-5 px-4 flex flex-col overflow-hidden"
                 style={{ width: sidebarOpen ? 280 : 80 }}
             >
-                <nav className="flex flex-col gap-2">
+                <nav className="flex-1 min-h-0 flex flex-col gap-2 overflow-y-auto overflow-x-hidden pr-1">
                     {menuItems.map((item, i) => (
                         <motion.div
                             key={item.label}
@@ -115,7 +117,7 @@ export default function ModernUI6({
                 )}
             </motion.aside>
 
-            <div className="flex-1 flex flex-col gap-6">
+            <div className="min-w-0 flex-1 flex flex-col gap-6">
 
                 <motion.header
                     initial={{ opacity: 0, y: -25 }}
@@ -140,11 +142,9 @@ export default function ModernUI6({
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ type: "spring", stiffness: 120, damping: 16 }}
-                    className="flex-1 rounded-3xl p-10 bg-white/5 backdrop-blur-2xl border border-white/10 shadow-lg"
+                    className="min-h-0 flex-1 rounded-3xl p-10 bg-white/5 backdrop-blur-2xl border border-white/10 shadow-lg"
                     style={{
-                        overflow: "scroll",
-                        maxHeight: "82vh",
-                        scrollbarWidth: "none",
+                        overflow: "auto",
                     }}
                 >
                     {children}

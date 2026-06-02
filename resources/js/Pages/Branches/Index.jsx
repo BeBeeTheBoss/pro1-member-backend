@@ -24,6 +24,10 @@ export default function Branches({ user, branches }) {
 
     const filtered = branchesList.filter(
         (b) =>
+            (b.branch_code ?? "")
+                .toLowerCase()
+                .replace(/\s/g, "")
+                .includes(search.toLowerCase().replace(/\s/g, "")) ||
             b.name
                 .toLowerCase()
                 .replace(/\s/g, "")
@@ -70,7 +74,7 @@ export default function Branches({ user, branches }) {
 
     return (
         <AuthenticatedLayout user={user}>
-            <div>
+            <div className="min-w-0">
                 <div className="flex justify-between px-2 items-center mb-4">
                     <h4 className="text-xl font-bold">Branches</h4>
                     <div>
@@ -82,7 +86,7 @@ export default function Branches({ user, branches }) {
                     </div>
                 </div>
 
-                <div className="w-full overflow-hidden rounded-2xl mt-4 shadow-lg bg-dark bg-opacity-50">
+                <div className="w-full min-w-0 overflow-hidden rounded-2xl mt-4 shadow-lg bg-dark bg-opacity-50">
                     {/* Search Box */}
                     <div className="p-4 border-b border-white/10 bg-white/5">
                         <input
@@ -92,30 +96,32 @@ export default function Branches({ user, branches }) {
                                 setSearch(e.target.value);
                                 setPage(1);
                             }}
-                            placeholder="Search by name, phone, or ID card..."
+                            placeholder="Search by branch code, name, region, or township..."
                             className="w-full px-3 py-2 rounded-lg bg-white/10 backdrop-blur-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-0"
                         />
                     </div>
 
                     <div
-                        className=""
+                        className="w-full"
                         style={{
-                            width: "1500px",
                             height: "53vh",
-                            overflowY: "scroll",
-                            overflowX: "scroll",
+                            overflowY: "auto",
+                            overflowX: "auto",
                             scrollBehavior: "smooth",
                             scrollbarColor: "#ffffff3d #ffffff00",
                         }}
                     >
-                        <table className="table-fixed min-w-max text-left text-sm">
-                            <thead className="bg-white/5 border-b border-white/10">
+                        <table className="table-fixed min-w-[2200px] w-full text-left text-sm">
+                            <thead className="bg-white/5 border-b border-white/10 sticky top-0 z-10">
                                 <tr>
                                     <th className="px-4 py-3 w-32 text-center">
                                         Action
                                     </th>
                                     <th className="px-4 py-3 w-[200px]">
                                         Image
+                                    </th>
+                                    <th className="px-4 py-3 w-40">
+                                        Branch Code
                                     </th>
                                     <th className="px-4 py-3 w-52">Name</th>
                                     <th className="px-4 py-3 w-96">Address</th>
@@ -175,9 +181,12 @@ export default function Branches({ user, branches }) {
                                         </td>
 
                                         <td className="px-4 py-3 w-52 whitespace-nowrap">
+                                            {m.branch_code ?? "-"}
+                                        </td>
+                                        <td className="px-4 py-3 w-52 whitespace-nowrap">
                                             {m.name}
                                         </td>
-                                        <td className="px-4 py-3 w-99">
+                                        <td className="px-4 py-3 w-96">
                                             {m.address}
                                         </td>
                                         <td className="px-4 py-3 w-60">

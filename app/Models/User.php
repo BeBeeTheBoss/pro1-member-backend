@@ -62,6 +62,8 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'last_logged_in_time' => 'datetime',
+            'total_usage_time_in_seconds' => 'integer',
             // 'password' => 'hashed',
         ];
     }
@@ -69,5 +71,10 @@ class User extends Authenticatable
     public function dailyRewards(): HasMany
     {
         return $this->hasMany(DailyReward::class);
+    }
+
+    public function claimedKeys(): HasMany
+    {
+        return $this->hasMany(ClaimedKey::class);
     }
 }
