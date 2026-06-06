@@ -32,6 +32,7 @@ export default function ModernUI6({
         { label: "Members" },
         { label: "Branches" },
         { label: "Notifications" },
+        { label: "Feedbacks" },
         // { label: "Policies" },
         { label: "FAQs" },
         { label: "Popups" },

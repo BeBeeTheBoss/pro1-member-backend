@@ -1,5 +1,5 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Activity, Clock, Timer, UserCheck, Users } from "lucide-react";
+import { Activity, Clock, MessageSquare, Star, Timer, UserCheck, Users } from "lucide-react";
 
 const formatDuration = (seconds = 0) => {
     const totalSeconds = Number(seconds) || 0;
@@ -224,6 +224,7 @@ export default function Dashboard({ user, dashboard }) {
     const dailyUsage = dashboard?.daily_usage ?? [];
     const topMembers = dashboard?.top_members ?? [];
     const recentMembers = dashboard?.recent_members ?? [];
+    const recentFeedbacks = dashboard?.recent_feedbacks ?? [];
 
     return (
         <AuthenticatedLayout user={user}>
@@ -268,6 +269,20 @@ export default function Dashboard({ user, dashboard }) {
                         helper="Accumulated from member usage totals"
                         icon={Clock}
                         accent="#0891b2"
+                    />
+                    <StatCard
+                        title="Feedbacks"
+                        value={formatNumber(stats.total_feedbacks)}
+                        helper="Submitted branch feedback"
+                        icon={MessageSquare}
+                        accent="#7c3aed"
+                    />
+                    <StatCard
+                        title="Avg rating"
+                        value={stats.average_feedback_rating || "N/A"}
+                        helper="Average score from submitted feedback"
+                        icon={Star}
+                        accent="#eab308"
                     />
                 </div>
 
@@ -363,6 +378,60 @@ export default function Dashboard({ user, dashboard }) {
                                 </tbody>
                             </table>
                         </div>
+                    </div>
+                </section>
+
+                <section>
+                    <div className="mb-4 flex items-center justify-between gap-4">
+                        <div>
+                            <h5 className="text-lg font-semibold text-white">
+                                Recent Feedbacks
+                            </h5>
+                            <p className="text-xs text-gray-400">
+                                Latest member comments and support signals.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                        {recentFeedbacks.length > 0 ? (
+                            recentFeedbacks.map((feedback) => (
+                                <div
+                                    key={feedback.id}
+                                    className="rounded-lg border border-white/10 bg-white/[0.05] p-4"
+                                >
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <p className="truncate text-sm font-semibold text-white">
+                                                {feedback.branch?.name || "Unknown branch"}
+                                            </p>
+                                            <p className="mt-1 text-xs text-gray-400">
+                                                {feedback.user?.name || "Unknown member"}
+                                            </p>
+                                        </div>
+                                        <span className="shrink-0 rounded bg-white/10 px-2 py-1 text-xs text-gray-200">
+                                            {feedback.rating}/5
+                                        </span>
+                                    </div>
+                                    <p className="mt-3 line-clamp-3 text-sm text-gray-300">
+                                        {feedback.message}
+                                    </p>
+                                    <div className="mt-3 flex items-center justify-between text-xs text-gray-400">
+                                        <span>{feedback.date || feedback.created_at}</span>
+                                        <span>
+                                            {feedback.rating}/5
+                                            {feedback.images_count > 0
+                                                ? `, ${feedback.images_count} images`
+                                                : ""}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="rounded-lg border border-dashed border-white/15 p-6 text-center text-sm text-gray-400 md:col-span-2 xl:col-span-3">
+                                No feedback submitted yet.
+                            </div>
+                        )}
                     </div>
                 </section>
             </div>

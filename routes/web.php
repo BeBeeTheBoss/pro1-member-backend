@@ -15,6 +15,7 @@ use App\Http\Controllers\PrivilegeController;
 use App\Http\Controllers\PrivilegeCategoryController;
 use App\Http\Controllers\EventPlatformController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\GamesEventController;
 use App\Http\Controllers\SpinWheelChanceController;
 
@@ -66,6 +67,11 @@ Route::middleware('admin.auth')->group(function () {
         Route::get('/edit/{id}','edit')->name('notifications.edit');
         Route::post('/update','update')->name('notifications.update');
         Route::delete('/{id}','destroy')->name('notifications.destroy');
+    });
+
+    Route::group(['prefix' => 'feedbacks', 'controller' => FeedbackController::class],function(){
+        Route::get('/','index')->name('feedbacks');
+        Route::delete('/{id}','destroy')->name('feedbacks.destroy');
     });
 
     Route::group(['prefix' => 'popups','controller' => PopupController::class],function(){

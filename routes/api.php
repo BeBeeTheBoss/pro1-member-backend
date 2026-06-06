@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\ClaimedKeyController;
 use App\Http\Controllers\Api\FAQController;
+use App\Http\Controllers\Api\FeedbackController;
 use App\Http\Controllers\Api\HistoryController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PointTransferController;
@@ -80,11 +81,17 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::group(['prefix' => 'branches', 'controller' => BranchController::class], function () {
         Route::get('/', 'index');
+        Route::get('/select', 'select');
     });
 
 
     Route::group(['prefix' => 'faqs', 'controller' => FAQController::class], function () {
         Route::get('/', 'index');
+    });
+
+    Route::group(['prefix' => 'feedbacks', 'controller' => FeedbackController::class], function () {
+        Route::get('/', 'index');
+        Route::post('/', 'store');
     });
 
     Route::group(['prefix' => 'notifications', 'controller' => NotificationController::class], function () {

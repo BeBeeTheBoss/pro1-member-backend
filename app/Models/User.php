@@ -77,4 +77,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(ClaimedKey::class);
     }
+
+    public function feedbacks(): HasMany
+    {
+        return $this->hasMany(Feedback::class);
+    }
 }

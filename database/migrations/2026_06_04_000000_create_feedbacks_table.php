@@ -1,0 +1,42 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('feedbacks', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('branch_id')->constrained()->cascadeOnDelete();
+            $table->date('date');
+            $table->integer('rating');
+            $table->text('message');
+            $table->timestamps();
+
+            $table->index(['branch_id', 'date']);
+        });
+
+        Schema::create('feedback_images', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('feedback_id')->constrained('feedbacks')->cascadeOnDelete();
+            $table->string('image');
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('feedback_images');
+        Schema::dropIfExists('feedbacks');
+    }
+};

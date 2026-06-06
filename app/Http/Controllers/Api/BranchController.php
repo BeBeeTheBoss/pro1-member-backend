@@ -15,4 +15,23 @@ class BranchController extends Controller
         return sendResponse(BranchResource::collection($this->model->all()), 200);
     }
 
+    public function select()
+    {
+        $branches = $this->model
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'branch_code'])
+            ->map(fn ($branch) => [
+                'id' => $branch->id,
+                'name' => $branch->name,
+                'branch_code' => $branch->branch_code,
+                'value' => $branch->id,
+                'label' => $branch->branch_code
+                    ? $branch->name . ' (' . $branch->branch_code . ')'
+                    : $branch->name,
+            ]);
+
+        return sendResponse($branches, 200);
+    }
+
 }
