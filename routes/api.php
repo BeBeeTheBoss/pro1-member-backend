@@ -99,6 +99,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/read', 'read');
         Route::get('/{id}', 'show');
         Route::post('/mark-all-as-read', 'markAllAsRead');
+        Route::post('/delete', 'destroyMultiple');
         Route::delete('/{id}', 'destroy');
     });
 

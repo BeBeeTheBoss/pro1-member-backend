@@ -12,7 +12,14 @@ class EventController extends Controller
 
     public function index()
     {
-        $events = $this->model->with('platformLinks.platform')->latest()->get();
+        $now = now()->toDateTimeString();
+
+        $events = $this->model
+            ->with('platformLinks.platform')
+            ->whereRaw("CONCAT(start_date, ' ', start_time) <= ?", [$now])
+            ->whereRaw("CONCAT(end_date, ' ', end_time) >= ?", [$now])
+            ->latest()
+            ->get();
 
         return sendResponse(EventResource::collection($events), 200);
     }

@@ -14,7 +14,9 @@ class Event extends Model
         'description',
         'image',
         'start_date',
+        'start_time',
         'end_date',
+        'end_time',
     ];
 
     public function platformLinks(): HasMany

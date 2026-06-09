@@ -32,6 +32,19 @@ export default function Events({ user, events }) {
         });
     };
 
+    const formatRange = (startDate, startTime, endDate, endTime) => {
+        if (!startDate && !endDate) return "-";
+
+        const start = [startDate, formatTime(startTime)].filter(Boolean).join(" ");
+        const end = [endDate, formatTime(endTime)].filter(Boolean).join(" ");
+
+        return `${start || "-"} to ${end || "-"}`;
+    };
+
+    const formatTime = (time) => {
+        return time ? time.slice(0, 5) : null;
+    };
+
     return (
         <AuthenticatedLayout user={user}>
             <div>
@@ -75,7 +88,7 @@ export default function Events({ user, events }) {
                                     <th className="px-4 py-3 w-40 text-center">Action</th>
                                     <th className="px-4 py-3 w-40 text-center">Image</th>
                                     <th className="px-4 py-3 w-64">Name</th>
-                                    <th className="px-4 py-3 w-64">Date Range</th>
+                                    <th className="px-4 py-3 w-80">Date & Time Range</th>
                                     <th className="px-4 py-3 w-[600px]">Description</th>
                                     <th className="px-4 py-3 w-[500px]">Platforms</th>
                                 </tr>
@@ -122,10 +135,13 @@ export default function Events({ user, events }) {
                                             )}
                                         </td>
                                         <td className="px-4 py-3">{e.name}</td>
-                                        <td className="px-4 py-3 text-gray-300">
-                                            {(e.start_date || e.end_date)
-                                                ? `${e.start_date ?? "-"} to ${e.end_date ?? "-"}`
-                                                : "-"}
+                                        <td className="px-4 py-3 text-gray-300 whitespace-nowrap">
+                                            {formatRange(
+                                                e.start_date,
+                                                e.start_time,
+                                                e.end_date,
+                                                e.end_time
+                                            )}
                                         </td>
                                         <td className="px-4 py-3 text-gray-300">
                                             {e.description ?? "-"}

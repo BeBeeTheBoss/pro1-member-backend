@@ -6,9 +6,11 @@ use App\Models\Event;
 use App\Models\EventPlatform;
 use App\Models\EventPlatformLink;
 use Inertia\Inertia;
+use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class EventController extends Controller
 {
@@ -39,18 +41,9 @@ class EventController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => ['required', 'string'],
-            'description' => ['required', 'string'],
-            'start_date' => ['required', 'date'],
-            'end_date' => ['required', 'date'],
-            'image' => ['required', 'image'],
-            'platforms' => ['required', 'array', 'min:1'],
-            'platforms.*.event_platform_id' => ['required', 'exists:event_platforms,id'],
-            'platforms.*.link' => ['required', 'string'],
-        ]);
+        $validated = $this->validateEventRequest($request, true);
 
-        $event = $this->model->create($request->only(['name', 'description', 'start_date', 'end_date']));
+        $event = $this->model->create(collect($validated)->only(['name', 'description', 'start_date', 'start_time', 'end_date', 'end_time'])->all());
 
         if ($request->hasFile('image')) {
             $image = $request->file('image');
@@ -60,7 +53,7 @@ class EventController extends Controller
             $event->save();
         }
 
-        foreach ($request->platforms as $row) {
+        foreach ($validated['platforms'] as $row) {
             EventPlatformLink::create([
                 'event_id' => $event->id,
                 'event_platform_id' => $row['event_platform_id'],
@@ -69,6 +62,33 @@ class EventController extends Controller
         }
 
         return redirect()->route('events')->with('success', 'Event created successfully');
+    }
+
+    private function validateEventRequest(Request $request, bool $imageRequired): array
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string'],
+            'description' => ['required', 'string'],
+            'start_date' => ['required', 'date'],
+            'start_time' => ['required', 'date_format:H:i'],
+            'end_date' => ['required', 'date'],
+            'end_time' => ['required', 'date_format:H:i'],
+            'image' => [$imageRequired ? 'required' : 'nullable', 'image'],
+            'platforms' => ['required', 'array', 'min:1'],
+            'platforms.*.event_platform_id' => ['required', 'exists:event_platforms,id'],
+            'platforms.*.link' => ['required', 'string'],
+        ]);
+
+        $startsAt = Carbon::parse($validated['start_date'] . ' ' . $validated['start_time']);
+        $endsAt = Carbon::parse($validated['end_date'] . ' ' . $validated['end_time']);
+
+        if ($endsAt->lt($startsAt)) {
+            throw ValidationException::withMessages([
+                'end_date' => 'End date and time must be after or equal to start date and time.',
+            ]);
+        }
+
+        return $validated;
     }
 
     public function edit($id)
@@ -86,20 +106,14 @@ class EventController extends Controller
 
     public function update(Request $request)
     {
+        $validated = $this->validateEventRequest($request, false);
+
         $request->validate([
             'id' => ['required', 'exists:events,id'],
-            'name' => ['required', 'string'],
-            'description' => ['required', 'string'],
-            'start_date' => ['required', 'date'],
-            'end_date' => ['required', 'date'],
-            'image' => ['nullable', 'image'],
-            'platforms' => ['required', 'array', 'min:1'],
-            'platforms.*.event_platform_id' => ['required', 'exists:event_platforms,id'],
-            'platforms.*.link' => ['required', 'string'],
         ]);
 
         $event = $this->model->find($request->id);
-        $event->update($request->only(['name', 'description', 'start_date', 'end_date']));
+        $event->update(collect($validated)->only(['name', 'description', 'start_date', 'start_time', 'end_date', 'end_time'])->all());
 
         if ($request->hasFile('image')) {
             $image = $request->file('image');
@@ -114,7 +128,7 @@ class EventController extends Controller
 
         EventPlatformLink::where('event_id', $event->id)->delete();
 
-        foreach ($request->platforms as $row) {
+        foreach ($validated['platforms'] as $row) {
             EventPlatformLink::create([
                 'event_id' => $event->id,
                 'event_platform_id' => $row['event_platform_id'],

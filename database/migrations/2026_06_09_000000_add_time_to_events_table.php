@@ -11,11 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('notifications', function (Blueprint $table) {
-            $table->id();
-            $table->string('title');
-            $table->text('message');
-            $table->timestamps();
+        Schema::table('events', function (Blueprint $table) {
+            $table->time('start_time')->nullable()->after('start_date');
+            $table->time('end_time')->nullable()->after('end_date');
         });
     }
 
@@ -24,6 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('notifications');
+        Schema::table('events', function (Blueprint $table) {
+            $table->dropColumn(['start_time', 'end_time']);
+        });
     }
 };

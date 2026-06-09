@@ -88,4 +88,31 @@ class NotificationController extends Controller
         return sendResponse(null, 200, "Notification deleted successfully");
     }
 
+    public function destroyMultiple(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'integer', 'distinct'],
+        ]);
+
+        $ids = collect($validated['ids'])->map(fn ($id) => (int) $id)->values();
+        $existingIds = UserNotification::whereIn('id', $ids)->pluck('id');
+
+        if ($existingIds->isEmpty()) {
+            return sendResponse([
+                'deleted_ids' => [],
+                'not_found_ids' => $ids,
+                'deleted_count' => 0,
+            ], 404, "Notifications not found");
+        }
+
+        UserNotification::whereIn('id', $existingIds)->delete();
+
+        return sendResponse([
+            'deleted_ids' => $existingIds->values(),
+            'not_found_ids' => $ids->diff($existingIds)->values(),
+            'deleted_count' => $existingIds->count(),
+        ], 200, "Notifications deleted successfully");
+    }
+
 }

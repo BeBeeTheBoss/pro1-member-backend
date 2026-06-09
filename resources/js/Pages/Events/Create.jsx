@@ -15,7 +15,9 @@ export default function CreateEvent({ user, platforms }) {
             description: "",
             image: null,
             start_date: "",
+            start_time: "",
             end_date: "",
+            end_time: "",
             platforms: [{ event_platform_id: "", link: "" }],
         });
 
@@ -62,8 +64,33 @@ export default function CreateEvent({ user, platforms }) {
             hasError = true;
         }
 
+        if (!data.start_time) {
+            setError("start_time", "Start time is required");
+            hasError = true;
+        }
+
         if (!data.end_date) {
             setError("end_date", "End date is required");
+            hasError = true;
+        }
+
+        if (!data.end_time) {
+            setError("end_time", "End time is required");
+            hasError = true;
+        }
+
+        if (
+            data.start_date &&
+            data.start_time &&
+            data.end_date &&
+            data.end_time &&
+            new Date(`${data.end_date}T${data.end_time}`) <
+                new Date(`${data.start_date}T${data.start_time}`)
+        ) {
+            setError(
+                "end_date",
+                "End date and time must be after or equal to start date and time"
+            );
             hasError = true;
         }
 
@@ -168,49 +195,93 @@ export default function CreateEvent({ user, platforms }) {
                             )}
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-lg mb-2 text-white">
-                                    Start Date <span className="text-red-400">*</span>
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-[90px_1fr_1fr] gap-4 items-start">
+                                <label className="text-lg pt-2 text-white">
+                                    Start <span className="text-red-400">*</span>
                                 </label>
-                                <input
-                                    type="date"
-                                    value={data.start_date}
-                                    onChange={(e) => setData("start_date", e.target.value)}
-                                    className={`w-full px-3 py-2 rounded-lg bg-white/10 text-lg text-white focus:outline-none focus:ring-2
-                                        ${
-                                            errors.start_date
-                                                ? "ring-red-500"
-                                                : "focus:ring-indigo-400"
-                                        }`}
-                                />
-                                {errors.start_date && (
-                                    <p className="text-red-400 text-xs mt-1">
-                                        {errors.start_date}
-                                    </p>
-                                )}
+
+                                <div>
+                                    <input
+                                        type="date"
+                                        value={data.start_date}
+                                        onChange={(e) => setData("start_date", e.target.value)}
+                                        className={`w-full px-3 py-2 rounded-lg bg-white/10 text-lg text-white focus:outline-none focus:ring-2
+                                            ${
+                                                errors.start_date
+                                                    ? "ring-red-500"
+                                                    : "focus:ring-indigo-400"
+                                            }`}
+                                    />
+                                    {errors.start_date && (
+                                        <p className="text-red-400 text-xs mt-1">
+                                            {errors.start_date}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <input
+                                        type="time"
+                                        value={data.start_time}
+                                        onChange={(e) => setData("start_time", e.target.value)}
+                                        className={`w-full px-3 py-2 rounded-lg bg-white/10 text-lg text-white focus:outline-none focus:ring-2
+                                            ${
+                                                errors.start_time
+                                                    ? "ring-red-500"
+                                                    : "focus:ring-indigo-400"
+                                            }`}
+                                    />
+                                    {errors.start_time && (
+                                        <p className="text-red-400 text-xs mt-1">
+                                            {errors.start_time}
+                                        </p>
+                                    )}
+                                </div>
                             </div>
 
-                            <div>
-                                <label className="block text-lg mb-2 text-white">
-                                    End Date <span className="text-red-400">*</span>
+                            <div className="grid grid-cols-1 md:grid-cols-[90px_1fr_1fr] gap-4 items-start">
+                                <label className="text-lg pt-2 text-white">
+                                    End <span className="text-red-400">*</span>
                                 </label>
-                                <input
-                                    type="date"
-                                    value={data.end_date}
-                                    onChange={(e) => setData("end_date", e.target.value)}
-                                    className={`w-full px-3 py-2 rounded-lg bg-white/10 text-lg text-white focus:outline-none focus:ring-2
-                                        ${
-                                            errors.end_date
-                                                ? "ring-red-500"
-                                                : "focus:ring-indigo-400"
-                                        }`}
-                                />
-                                {errors.end_date && (
-                                    <p className="text-red-400 text-xs mt-1">
-                                        {errors.end_date}
-                                    </p>
-                                )}
+
+                                <div>
+                                    <input
+                                        type="date"
+                                        value={data.end_date}
+                                        onChange={(e) => setData("end_date", e.target.value)}
+                                        className={`w-full px-3 py-2 rounded-lg bg-white/10 text-lg text-white focus:outline-none focus:ring-2
+                                            ${
+                                                errors.end_date
+                                                    ? "ring-red-500"
+                                                    : "focus:ring-indigo-400"
+                                            }`}
+                                    />
+                                    {errors.end_date && (
+                                        <p className="text-red-400 text-xs mt-1">
+                                            {errors.end_date}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <input
+                                        type="time"
+                                        value={data.end_time}
+                                        onChange={(e) => setData("end_time", e.target.value)}
+                                        className={`w-full px-3 py-2 rounded-lg bg-white/10 text-lg text-white focus:outline-none focus:ring-2
+                                            ${
+                                                errors.end_time
+                                                    ? "ring-red-500"
+                                                    : "focus:ring-indigo-400"
+                                            }`}
+                                    />
+                                    {errors.end_time && (
+                                        <p className="text-red-400 text-xs mt-1">
+                                            {errors.end_time}
+                                        </p>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
