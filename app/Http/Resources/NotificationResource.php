@@ -24,6 +24,7 @@ class NotificationResource extends JsonResource
         }
 
         $data['image'] = $data['image'] ? url("storage/notifications/".$data['image']) : null;
+        $data['recipient_file_url'] = $data['recipient_file'] ? route('notifications.recipient-file', $data['id']) : null;
 
         return $data;
     }

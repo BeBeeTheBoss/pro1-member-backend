@@ -69,6 +69,10 @@ class NotificationController extends Controller
             'is_manual' => true
         ]);
 
+        if ($request->choice === 'excel') {
+            $this->storeRecipientFile($notification, $request);
+        }
+
         if ($request->hasFile('image')) {
 
             $image = $request->file('image');
@@ -174,6 +178,29 @@ class NotificationController extends Controller
                 }
             })
             ->get();
+    }
+
+    private function storeRecipientFile(Notification $notification, Request $request): void
+    {
+        if (!$request->hasFile('recipient_file')) {
+            return;
+        }
+
+        $file = $request->file('recipient_file');
+        $filename = $notification->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+
+        if ($notification->recipient_file) {
+            Storage::disk('public')->delete($notification->recipient_file);
+        }
+
+        $path = Storage::disk('public')->putFileAs('notification-recipient-files', $file, $filename);
+
+        $notification->update([
+            'recipient_file' => $path,
+            'recipient_file_original_name' => $file->getClientOriginalName(),
+            'recipient_file_mime_type' => $file->getClientMimeType(),
+            'recipient_file_size' => $file->getSize(),
+        ]);
     }
 
     private function parseCsvRows(string $path): array
@@ -293,6 +320,9 @@ class NotificationController extends Controller
         }
 
         $notification->image = $notification->image ? url("storage/notifications/" . $notification->image) : null;
+        $notification->recipient_file_url = $notification->recipient_file
+            ? route('notifications.recipient-file', $notification->id)
+            : null;
 
         return Inertia::render('Notifications/Edit', [
             'notification' => $notification,
@@ -302,14 +332,58 @@ class NotificationController extends Controller
 
     public function update(Request $request)
     {
+        $request->validate([
+            'id' => 'required|exists:notifications,id',
+            'title' => 'required|string',
+            'message' => 'required|string',
+            'choice' => 'required|in:all,specific,excel',
+            'user_id' => 'required_if:choice,specific|nullable|exists:users,id',
+            'recipient_file' => 'nullable|file|mimes:xlsx,csv,txt',
+            'image' => 'nullable',
+        ]);
 
         $notification = $this->model->find($request->id);
+
+        if ($request->choice === 'excel' && !$request->hasFile('recipient_file') && !$notification->recipient_file) {
+            return back()
+                ->withErrors(['recipient_file' => 'Please upload an Excel or CSV file.'])
+                ->withInput();
+        }
+
+        $users = match ($request->choice) {
+            'all' => User::get(),
+            'specific' => User::where('id', $request->user_id)->get(),
+            'excel' => $request->hasFile('recipient_file')
+                ? $this->resolveUsersFromRecipientFile($request)
+                : null,
+            default => collect(),
+        };
+
+        if ($request->choice === 'excel' && $request->hasFile('recipient_file') && $users->isEmpty()) {
+            return back()
+                ->withErrors(['recipient_file' => 'No users matched from the uploaded file.'])
+                ->withInput();
+        }
 
         $notification->update([
             'title' => $request->title,
             'message' => $request->message,
             'recipient' => $request->choice
         ]);
+
+        if ($request->choice === 'excel' && $request->hasFile('recipient_file')) {
+            $this->storeRecipientFile($notification, $request);
+        }
+
+        if ($request->choice !== 'excel' && $notification->recipient_file) {
+            Storage::disk('public')->delete($notification->recipient_file);
+            $notification->update([
+                'recipient_file' => null,
+                'recipient_file_original_name' => null,
+                'recipient_file_mime_type' => null,
+                'recipient_file_size' => null,
+            ]);
+        }
 
         if ($notification->image && !$request->hasFile('image') && $request->image === null) {
             Storage::disk('public')->delete('notifications/' . $notification->image);
@@ -331,19 +405,33 @@ class NotificationController extends Controller
             $notification->save();
         }
 
-        UserNotification::where('notification_id', $notification->id)->delete();
+        if ($request->choice !== 'excel' || $request->hasFile('recipient_file')) {
+            UserNotification::where('notification_id', $notification->id)->delete();
 
-        $userIds_for_notification = $request->choice === 'all' ? User::pluck('id') : User::where('id', $request->user_id)->pluck('id');
+            foreach ($users as $user) {
 
-        foreach ($userIds_for_notification as $user_id) {
-
-            UserNotification::create([
-                'user_id' => $user_id,
-                'notification_id' => $notification->id
-            ]);
+                UserNotification::create([
+                    'user_id' => $user->id,
+                    'notification_id' => $notification->id
+                ]);
+            }
         }
 
         return redirect()->route('notifications')->with('success', 'Notification updated successfully');
+    }
+
+    public function downloadRecipientFile($id)
+    {
+        $notification = $this->model->findOrFail($id);
+
+        if (!$notification->recipient_file || !Storage::disk('public')->exists($notification->recipient_file)) {
+            abort(404);
+        }
+
+        return Storage::disk('public')->download(
+            $notification->recipient_file,
+            $notification->recipient_file_original_name ?? basename($notification->recipient_file)
+        );
     }
 
     public function destroy($id)
@@ -351,6 +439,14 @@ class NotificationController extends Controller
         $notification = $this->model->find($id);
 
         UserNotification::where('notification_id', $notification->id)->delete();
+
+        if ($notification->image) {
+            Storage::disk('public')->delete('notifications/' . $notification->image);
+        }
+
+        if ($notification->recipient_file) {
+            Storage::disk('public')->delete($notification->recipient_file);
+        }
 
         $notification->delete();
         return redirect()->route('notifications')->with('success', 'Notification deleted successfully');

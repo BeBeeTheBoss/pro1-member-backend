@@ -18,6 +18,9 @@ export default function ModernUI6({
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [profileOpen, setProfileOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState("dashboard");
+    const lockedActions = React.useRef(new Set());
+    const lockedForms = React.useRef(new Set());
+    const unlockTimer = React.useRef(null);
 
     const { url } = usePage();
 
@@ -26,6 +29,130 @@ export default function ModernUI6({
 
         setCurrentPage(url.split("/")[1]);
     }, [url]);
+
+    useEffect(() => {
+        const actionLabels = ["create", "update", "delete", "submit", "logout"];
+        let visitActive = false;
+
+        const unlockActions = () => {
+            lockedActions.current.forEach((element) => {
+                element.disabled = false;
+                element.removeAttribute("aria-busy");
+                element.classList.remove("pointer-events-none", "opacity-50");
+            });
+            lockedForms.current.forEach((form) => {
+                form.removeAttribute("data-submitting");
+            });
+            lockedActions.current.clear();
+            lockedForms.current.clear();
+
+            if (unlockTimer.current) {
+                clearTimeout(unlockTimer.current);
+                unlockTimer.current = null;
+            }
+        };
+
+        const scheduleFallbackUnlock = () => {
+            if (unlockTimer.current) {
+                clearTimeout(unlockTimer.current);
+            }
+
+            unlockTimer.current = setTimeout(() => {
+                if (!visitActive) {
+                    unlockActions();
+                }
+            }, 1200);
+        };
+
+        const lockElement = (element) => {
+            if (!element || lockedActions.current.has(element)) {
+                return false;
+            }
+
+            lockedActions.current.add(element);
+            element.disabled = true;
+            element.setAttribute("aria-busy", "true");
+            element.classList.add("pointer-events-none", "opacity-50");
+            scheduleFallbackUnlock();
+
+            return true;
+        };
+
+        const isActionButton = (button, includeSubmit = true) => {
+            const type = (button.getAttribute("type") || "").toLowerCase();
+            const label = (button.textContent || "").trim().toLowerCase();
+
+            return (
+                (includeSubmit && type === "submit") ||
+                actionLabels.some((action) => label.includes(action))
+            );
+        };
+
+        const handleClick = (event) => {
+            const button = event.target.closest("button");
+
+            if (
+                !button ||
+                (button.getAttribute("type") || "").toLowerCase() === "submit" ||
+                !isActionButton(button, false)
+            ) {
+                return;
+            }
+
+            if (lockedActions.current.has(button)) {
+                event.preventDefault();
+                event.stopPropagation();
+                return;
+            }
+
+            lockElement(button);
+        };
+
+        const handleSubmit = (event) => {
+            const form = event.target;
+            const submitter = event.submitter;
+
+            if (
+                form?.getAttribute("data-submitting") === "true" ||
+                (submitter && lockedActions.current.has(submitter))
+            ) {
+                event.preventDefault();
+                event.stopPropagation();
+                return;
+            }
+
+            if (form) {
+                form.setAttribute("data-submitting", "true");
+                lockedForms.current.add(form);
+                scheduleFallbackUnlock();
+            }
+
+            lockElement(submitter);
+        };
+
+        document.addEventListener("click", handleClick, true);
+        document.addEventListener("submit", handleSubmit, true);
+        const removeStartListener = router.on("start", () => {
+            visitActive = true;
+
+            if (unlockTimer.current) {
+                clearTimeout(unlockTimer.current);
+                unlockTimer.current = null;
+            }
+        });
+        const removeFinishListener = router.on("finish", () => {
+            visitActive = false;
+            unlockActions();
+        });
+
+        return () => {
+            document.removeEventListener("click", handleClick, true);
+            document.removeEventListener("submit", handleSubmit, true);
+            removeStartListener();
+            removeFinishListener();
+            unlockActions();
+        };
+    }, []);
 
     const menuItems = [
         { label: "Dashboard" },

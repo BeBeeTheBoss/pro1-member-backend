@@ -64,6 +64,7 @@ Route::middleware('admin.auth')->group(function () {
         Route::get('/','index')->name('notifications');
         Route::get('/create','create')->name('notifications.create');
         Route::post('/','store')->name('notifications.store');
+        Route::get('/{id}/recipient-file','downloadRecipientFile')->name('notifications.recipient-file');
         Route::get('/edit/{id}','edit')->name('notifications.edit');
         Route::post('/update','update')->name('notifications.update');
         Route::delete('/{id}','destroy')->name('notifications.destroy');

@@ -12,6 +12,7 @@ export default function UpdateNotification({ user, notification }) {
             message: notification.message,
             choice: notification.recipient, // all or specific
             user_id: notification.user?.id, // for single choice
+            recipient_file: null,
             image: notification.image, // optional new image
         });
 
@@ -76,6 +77,14 @@ export default function UpdateNotification({ user, notification }) {
         }
         if (data.choice === "specific" && !data.user_id) {
             setError("user_id", "Please select a user");
+            hasError = true;
+        }
+        if (
+            data.choice === "excel" &&
+            !data.recipient_file &&
+            !notification.recipient_file_url
+        ) {
+            setError("recipient_file", "Please upload an Excel or CSV file");
             hasError = true;
         }
         if (hasError) return;
@@ -253,6 +262,19 @@ export default function UpdateNotification({ user, notification }) {
                                     />
                                     Specific User
                                 </label>
+                                <label className="flex items-center gap-2 text-white cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="choice"
+                                        value="excel"
+                                        checked={data.choice === "excel"}
+                                        onChange={(e) =>
+                                            setData("choice", e.target.value)
+                                        }
+                                        className="w-4 h-4 accent-indigo-500"
+                                    />
+                                    Excel File
+                                </label>
                             </div>
                         </div>
 
@@ -324,6 +346,52 @@ export default function UpdateNotification({ user, notification }) {
                                 {errors.user_id && (
                                     <p className="text-red-400 text-xs mt-1">
                                         {errors.user_id}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+
+                        {data.choice === "excel" && (
+                            <div>
+                                <label className="block text-lg mb-2 text-white">
+                                    Recipient File
+                                    {!notification.recipient_file_url && (
+                                        <span className="text-red-400"> *</span>
+                                    )}
+                                </label>
+
+                                {notification.recipient_file_url && (
+                                    <a
+                                        href={notification.recipient_file_url}
+                                        className="mb-3 inline-flex max-w-full rounded-lg bg-white/10 px-3 py-2 text-sm text-white hover:bg-white/20"
+                                    >
+                                        <span className="truncate">
+                                            {notification.recipient_file_original_name ??
+                                                "Download current file"}
+                                        </span>
+                                    </a>
+                                )}
+
+                                <input
+                                    type="file"
+                                    accept=".xlsx,.csv,.txt"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0] ?? null;
+                                        setData("recipient_file", file);
+                                    }}
+                                    className={`w-full px-3 py-2 rounded-lg bg-white/10 text-white focus:outline-none focus:ring-2 ${
+                                        errors.recipient_file
+                                            ? "ring-red-500"
+                                            : "focus:ring-indigo-400"
+                                    }`}
+                                />
+                                <p className="text-xs text-gray-300 mt-1">
+                                    Upload a new file only when you want to
+                                    replace the current recipient list.
+                                </p>
+                                {errors.recipient_file && (
+                                    <p className="text-red-400 text-xs mt-1">
+                                        {errors.recipient_file}
                                     </p>
                                 )}
                             </div>

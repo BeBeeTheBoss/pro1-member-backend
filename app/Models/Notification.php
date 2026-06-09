@@ -11,6 +11,10 @@ class Notification extends Model
         'message',
         'recipient',
         'image',
+        'recipient_file',
+        'recipient_file_original_name',
+        'recipient_file_mime_type',
+        'recipient_file_size',
         'route_to',
         'is_manual'
     ];

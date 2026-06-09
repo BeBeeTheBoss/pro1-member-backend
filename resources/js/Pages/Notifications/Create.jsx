@@ -9,7 +9,7 @@ export default function CreateNotification({ user }) {
         useForm({
             title: "",
             message: "",
-            choice: "all", // all | specific
+            choice: "all", // all | specific | excel
             user_id: "",
             recipient_file: null,
             image: null,
@@ -374,7 +374,7 @@ export default function CreateNotification({ user }) {
                                 </label>
                                 <input
                                     type="file"
-                                    accept=".xlsx,.csv"
+                                    accept=".xlsx,.csv,.txt"
                                     onChange={(e) => {
                                         const file = e.target.files?.[0] ?? null;
                                         setData("recipient_file", file);

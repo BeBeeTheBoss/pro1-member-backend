@@ -88,6 +88,9 @@ export default function Notifications({ user, notifications }) {
                                     <th className="px-4 py-3 w-48 text-center">
                                         Recipient
                                     </th>
+                                    <th className="px-4 py-3 w-52 text-center">
+                                        Excel File
+                                    </th>
                                     <th className="px-4 py-3 w-32 text-center w-[200px]">
                                         Date
                                     </th>
@@ -155,9 +158,32 @@ export default function Notifications({ user, notifications }) {
                                                 <span className="px-3 py-2 rounded-lg text-xs bg-blue-500/30 text-blue-300">
                                                     All Users
                                                 </span>
+                                            ) : n.recipient === "excel" ? (
+                                                <span className="px-3 py-2 rounded-lg text-xs bg-emerald-500/30 text-emerald-300">
+                                                    Excel Users
+                                                </span>
                                             ) : (
                                                 <span className="px-3 py-2 rounded-lg text-xs bg-purple-500/30 text-purple-300">
                                                     {n.user ?? "Specific User"}
+                                                </span>
+                                            )}
+                                        </td>
+
+                                        {/* Excel File */}
+                                        <td className="px-4 py-3 text-center">
+                                            {n.recipient_file_url ? (
+                                                <a
+                                                    href={n.recipient_file_url}
+                                                    className="inline-flex max-w-44 items-center justify-center rounded-lg bg-white/10 px-3 py-2 text-xs text-white hover:bg-white/20"
+                                                >
+                                                    <span className="truncate">
+                                                        {n.recipient_file_original_name ??
+                                                            "Download file"}
+                                                    </span>
+                                                </a>
+                                            ) : (
+                                                <span className="text-xs text-gray-500">
+                                                    N/A
                                                 </span>
                                             )}
                                         </td>
