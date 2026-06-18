@@ -17,6 +17,7 @@ use App\Http\Controllers\EventPlatformController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\GamesEventController;
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SpinWheelChanceController;
 
 // Route::get('/', function () {
@@ -136,6 +137,15 @@ Route::middleware('admin.auth')->group(function () {
         Route::get('/edit/{id}', 'edit')->name('spin-wheel-chances.edit');
         Route::post('/update', 'update')->name('spin-wheel-chances.update');
         Route::delete('/{id}', 'destroy')->name('spin-wheel-chances.destroy');
+    });
+
+    Route::group(['prefix' => 'settings', 'controller' => SettingController::class], function () {
+        Route::get('/', 'index')->name('settings');
+        Route::get('/create', 'create')->name('settings.create');
+        Route::post('/', 'store')->name('settings.store');
+        Route::get('/edit/{attribute}', 'edit')->name('settings.edit');
+        Route::post('/update', 'update')->name('settings.update');
+        Route::delete('/{attribute}', 'destroy')->name('settings.destroy');
     });
 
 });

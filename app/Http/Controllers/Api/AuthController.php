@@ -24,9 +24,10 @@ class AuthController extends Controller
 
         info($request->all());
 
+        $cloud_db = DB::connection('Cloud');
+
         DB::beginTransaction();
         try {
-            $cloud_db = DB::connection('Cloud');
             $cloud_db->table(table: 'public.gbh_customer')
                 ->where('identification_card', $request->idcard)
                 ->update([
@@ -35,6 +36,7 @@ class AuthController extends Controller
                     'address_slave' => $request->address,
                     'fullname' => $request->fullname,
                     'tax_code' => $request->tax_code,
+                    'nrc_array_id' => $request->tax_code,
                     'date_birthday' => Carbon::parse($request->birthdate)->format('Y-m-d')
                 ]);
 
@@ -98,7 +100,7 @@ class AuthController extends Controller
             $member_info['branch_name'] = $branch_name;
 
             $noti_title = "System";
-            $noti_message = "Congratulations! You received a first login coupon that earns you 20 points.";
+            $noti_message = "Congrats! Your first login coupon is ready. Redeem it in My Coupons to get 20 points.";
 
             $timestamp = Carbon::now()->getTimestamp() * 1000;
 

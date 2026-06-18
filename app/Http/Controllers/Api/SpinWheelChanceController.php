@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use App\Models\SpinRecord;
 use App\Models\SpinWheelChanceDaily;
 use App\Models\User;
@@ -48,7 +49,9 @@ class SpinWheelChanceController extends Controller
             ->first();
         $super_prize_times = $super_prize ? $super_prize->max_times : 0;
 
-        if ($spin_count % 200 === 0 && $super_prize_times > 0) {
+        $target = Setting::where('attribute','super_prize_target')->first()->value ?? 200;
+
+        if ($spin_count % $target === 0 && $super_prize_times > 0) {
 
             $super_prize->max_times -= 1;
             $super_prize->save();

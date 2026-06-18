@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\DailyRewardController;
 use App\Http\Controllers\Api\GamesEventController;
 use App\Http\Controllers\Api\SessionController;
+use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\SpinWheelChanceController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
@@ -39,6 +40,7 @@ Route::group(['prefix' => 'users', 'controller' => UserController::class], funct
 Route::get('/events', [EventController::class, 'index']);
 
 Route::get('/spin-wheel-chances', [SpinWheelChanceController::class, 'index']);
+Route::get('/getLatestVersion', [SettingController::class, 'getLatestVersion'])->name('getLatestVersion');
 
 
 
