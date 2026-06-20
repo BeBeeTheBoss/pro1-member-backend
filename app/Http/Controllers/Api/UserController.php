@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use App\Http\Resources\CouponResource;
 use App\Models\Notification;
+use App\Models\PasswordResetRecord;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Container\Attributes\Log;
 use Illuminate\Support\Facades\Log as FacadesLog;
@@ -218,15 +219,25 @@ class UserController extends Controller
 
         $incomingHash = hash('sha256', $request->oldPassword);
         if (!hash_equals((string) $user->password, $incomingHash)) {
+            return sendResponse(null, 401, "Wrong password");
         }
 
         // if (!Hash::check($request->oldPassword, $user->password)) {
         //     return sendResponse(null, 401, "Wrong password");
         // }
 
-        $user->password = hash('sha256', $request->newPassword);
+        DB::beginTransaction();
+        try {
+            $user->password = hash('sha256', $request->newPassword);
+            $user->save();
 
-        $user->save();
+            $this->storePasswordResetRecord($user, $request, 'change_password');
+
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollBack();
+            return sendResponse(null, 500, $e->getMessage());
+        }
 
         return sendResponse(null, 200, "Password changed successfully");
     }
@@ -239,10 +250,56 @@ class UserController extends Controller
             return sendResponse(null, 404, "User not found");
         }
 
-        $user->password = hash('sha256', $request->newPassword);
-        $user->save();
+        DB::beginTransaction();
+        try {
+            $user->password = hash('sha256', $request->newPassword);
+            $user->save();
+
+            $this->storePasswordResetRecord($user, $request, 'forgot_password');
+
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollBack();
+            return sendResponse(null, 500, $e->getMessage());
+        }
 
         return sendResponse(null, 200, "Password changed successfully");
+    }
+
+    public function passwordResetRecords(Request $request)
+    {
+        $limit = max(1, min((int) $request->get('limit', 20), 100));
+
+        $records = PasswordResetRecord::query()
+            ->with('user:id,name,idcard,phone')
+            ->when($request->idcard, function ($query, $idcard) {
+                $query->where('idcard', $idcard);
+            })
+            ->when($request->reset_type, function ($query, $resetType) {
+                $query->where('reset_type', $resetType);
+            })
+            ->latest('reset_at')
+            ->limit($limit)
+            ->get();
+
+        return sendResponse($records, 200);
+    }
+
+    private function storePasswordResetRecord(User $user, Request $request, string $resetType): void
+    {
+        PasswordResetRecord::create([
+            'user_id' => $user->id,
+            'idcard' => $user->idcard,
+            'phone' => $user->phone,
+            'reset_type' => $resetType,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'device_id' => $request->deviceId ?? $user->device_id,
+            'device_name' => $request->deviceName ?? $user->device_name,
+            'device_type' => $request->deviceType ?? $user->device_type,
+            'app_version' => $request->appVersion ?? $user->app_version,
+            'reset_at' => Carbon::now(),
+        ]);
     }
 
     public function updateUser(Request $request)

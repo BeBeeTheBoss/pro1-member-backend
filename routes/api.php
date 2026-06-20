@@ -47,6 +47,7 @@ Route::get('/getLatestVersion', [SettingController::class, 'getLatestVersion'])-
 Route::middleware('auth:sanctum')->group(function () {
 
     Route::group(['prefix' => 'users', 'controller' => UserController::class], function () {
+        Route::get('/password-reset-records', 'passwordResetRecords')->name('passwordResetRecords');
         Route::post('/set-push-token', 'setPushToken')->name('setPushToken');
         Route::post('/set-app-version', 'setAppVersion')->name('setAppVersion');
         Route::post('/logout', 'logout')->name('logout');

@@ -82,4 +82,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Feedback::class);
     }
+
+    public function passwordResetRecords(): HasMany
+    {
+        return $this->hasMany(PasswordResetRecord::class);
+    }
 }
