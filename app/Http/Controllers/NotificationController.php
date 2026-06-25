@@ -74,7 +74,7 @@ class NotificationController extends Controller
             $notification->id,
             $request->choice,
             $request->choice === 'specific' ? (int) $request->user_id : null,
-        )->afterResponse();
+        );
 
         return redirect()->route('notifications')->with('success', 'Notification created successfully. Recipients are being processed in the background.');
     }
@@ -376,7 +376,7 @@ class NotificationController extends Controller
                 $request->choice === 'specific' ? (int) $request->user_id : null,
                 true,
                 false,
-            )->afterResponse();
+            );
         }
 
         return redirect()->route('notifications')->with('success', 'Notification updated successfully. Recipients are being processed in the background.');
