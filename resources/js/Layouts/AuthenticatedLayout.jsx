@@ -205,7 +205,7 @@ export default function ModernUI6({
                             //     backgroundColor: "#ffffff1a",
                             // }}
                             className={
-                                currentPage === item.label.toLowerCase()
+                                currentPage.toLowerCase().includes(item.label.toLowerCase())
                                     ? "flex items-center gap-3 cursor-pointer p-3 rounded-2xl bg-white/10"
                                     : "flex items-center gap-3 cursor-pointer p-3 rounded-2xl"
                             }
