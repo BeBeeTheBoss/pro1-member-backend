@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ProcessNotificationRecipients;
 use App\Models\User;
 use Inertia\Inertia;
 use App\Models\Notification;
@@ -49,19 +50,6 @@ class NotificationController extends Controller
             'image' => 'nullable|image',
         ]);
 
-        $users = match ($request->choice) {
-            'all' => User::get(),
-            'specific' => User::where('id', $request->user_id)->get(),
-            'excel' => $this->resolveUsersFromRecipientFile($request),
-            default => collect(),
-        };
-
-        if ($request->choice === 'excel' && $users->isEmpty()) {
-            return back()
-                ->withErrors(['recipient_file' => 'No users matched from the uploaded file.'])
-                ->withInput();
-        }
-
         $notification = $this->model->create([
             'title' => $request->title,
             'message' => $request->message,
@@ -82,25 +70,13 @@ class NotificationController extends Controller
             $notification->save();
         }
 
-        $tokens = [];
+        ProcessNotificationRecipients::dispatch(
+            $notification->id,
+            $request->choice,
+            $request->choice === 'specific' ? (int) $request->user_id : null,
+        )->afterResponse();
 
-        foreach ($users as $user) {
-
-            UserNotification::create([
-                'user_id' => $user->id,
-                'notification_id' => $notification->id
-            ]);
-
-            if (!empty($user->expo_push_token)) {
-                array_push($tokens, $user->expo_push_token);
-            }
-        }
-
-        if (!empty($tokens)) {
-            sendPushNotification($tokens, $request->title, $request->message);
-        }
-
-        return redirect()->route('notifications')->with('success', 'Notification created successfully');
+        return redirect()->route('notifications')->with('success', 'Notification created successfully. Recipients are being processed in the background.');
     }
 
     private function resolveUsersFromRecipientFile(Request $request): Collection
@@ -350,21 +326,6 @@ class NotificationController extends Controller
                 ->withInput();
         }
 
-        $users = match ($request->choice) {
-            'all' => User::get(),
-            'specific' => User::where('id', $request->user_id)->get(),
-            'excel' => $request->hasFile('recipient_file')
-                ? $this->resolveUsersFromRecipientFile($request)
-                : null,
-            default => collect(),
-        };
-
-        if ($request->choice === 'excel' && $request->hasFile('recipient_file') && $users->isEmpty()) {
-            return back()
-                ->withErrors(['recipient_file' => 'No users matched from the uploaded file.'])
-                ->withInput();
-        }
-
         $notification->update([
             'title' => $request->title,
             'message' => $request->message,
@@ -406,18 +367,16 @@ class NotificationController extends Controller
         }
 
         if ($request->choice !== 'excel' || $request->hasFile('recipient_file')) {
-            UserNotification::where('notification_id', $notification->id)->delete();
-
-            foreach ($users as $user) {
-
-                UserNotification::create([
-                    'user_id' => $user->id,
-                    'notification_id' => $notification->id
-                ]);
-            }
+            ProcessNotificationRecipients::dispatch(
+                $notification->id,
+                $request->choice,
+                $request->choice === 'specific' ? (int) $request->user_id : null,
+                true,
+                false,
+            )->afterResponse();
         }
 
-        return redirect()->route('notifications')->with('success', 'Notification updated successfully');
+        return redirect()->route('notifications')->with('success', 'Notification updated successfully. Recipients are being processed in the background.');
     }
 
     public function downloadRecipientFile($id)

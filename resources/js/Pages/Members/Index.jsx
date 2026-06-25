@@ -1,16 +1,15 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { router, usePage } from "@inertiajs/react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { router } from "@inertiajs/react";
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import SuccessIcon from "../../images/check.png";
 import ErrorIcon from "../../images/delete.png";
 import ConfirmModal from "@/Components/ConfirmModal";
 import NotiMessage from "@/Components/NotiMessage";
 
-export default function Members({ user, members }) {
-    const [memberList, setMemberList] = useState(members);
-    const [page, setPage] = useState(1);
-    const [search, setSearch] = useState("");
+export default function Members({ user, members, filters = {} }) {
+    const [memberList, setMemberList] = useState(members.data ?? []);
+    const [search, setSearch] = useState(filters.search ?? "");
     const [modelOpen, setModelOpen] = useState(false);
     const [memberIDForDelete, setMemberIDForDelete] = useState(null);
     const [notiOpen, setNotiOpen] = useState(false);
@@ -19,18 +18,40 @@ export default function Members({ user, members }) {
     const [notiTitle, setNotiTitle] = useState("");
     const [notiMessage, setNotiMessage] = useState("");
 
-    const perPage = 20;
+    useEffect(() => {
+        setMemberList(members.data ?? []);
+    }, [members]);
 
-    // Filter members by search
-    const filtered = memberList.filter(
-        (m) =>
-            m.name.toLowerCase().includes(search.toLowerCase()) ||
-            m.phone.includes(search) ||
-            m.idcard.includes(search)
-    );
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            router.get(
+                "/members",
+                { search },
+                {
+                    preserveState: true,
+                    preserveScroll: true,
+                    replace: true,
+                    only: ["members", "filters"],
+                }
+            );
+        }, 350);
 
-    const totalPages = Math.ceil(filtered.length / perPage);
-    const paginated = filtered.slice((page - 1) * perPage, page * perPage);
+        return () => clearTimeout(timer);
+    }, [search]);
+
+    const goToPage = (url) => {
+        if (!url) return;
+
+        router.get(
+            url,
+            {},
+            {
+                preserveState: true,
+                preserveScroll: true,
+                only: ["members", "filters"],
+            }
+        );
+    };
 
     const showNotification = (message, type) => {
         setNotiTitle(
@@ -52,14 +73,6 @@ export default function Members({ user, members }) {
                 setMemberList((prev) =>
                     prev.filter((m) => m.id !== memberIDForDelete)
                 );
-
-                // 🔥 Fix pagination if last item on page removed
-                setPage((p) => {
-                    const newTotalPages = Math.ceil(
-                        (filtered.length - 1) / perPage
-                    );
-                    return Math.min(p, newTotalPages === 0 ? 1 : newTotalPages);
-                });
 
                 if (response.props.flash.success) {
                     showNotification(response.props.flash.success, "success");
@@ -85,7 +98,6 @@ export default function Members({ user, members }) {
                             value={search}
                             onChange={(e) => {
                                 setSearch(e.target.value);
-                                setPage(1);
                             }}
                             placeholder="Search by name, phone, or ID card..."
                             className="w-full px-3 py-2 rounded-lg bg-white/10 backdrop-blur-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-0"
@@ -118,61 +130,81 @@ export default function Members({ user, members }) {
                             </thead>
 
                             <tbody>
-                                {paginated.map((m, i) => (
-                                    <motion.tr
-                                        key={m.id}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: i * 0.09 }}
-                                        className="hover:bg-white/5 transition-colors border-b border-white/5"
-                                    >
-                                        <td className="px-4 py-3">
-                                            <button
-                                                onClick={() => {
-                                                    setModelOpen(true);
-                                                    setMemberIDForDelete(m.id);
-                                                }}
-                                                className="px-3 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-xs shadow"
-                                            >
-                                                Delete
-                                            </button>
+                                {memberList.length > 0 ? (
+                                    memberList.map((m, i) => (
+                                        <motion.tr
+                                            key={m.id}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: i * 0.09 }}
+                                            className="hover:bg-white/5 transition-colors border-b border-white/5"
+                                        >
+                                            <td className="px-4 py-3">
+                                                <button
+                                                    onClick={() => {
+                                                        setModelOpen(true);
+                                                        setMemberIDForDelete(
+                                                            m.id
+                                                        );
+                                                    }}
+                                                    className="px-3 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-xs shadow"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </td>
+                                            <td className="px-4 py-3 font-semibold flex items-center gap-3">
+                                                {m.image ? (
+                                                    <img
+                                                        src={m.image}
+                                                        className="border border-white/10 w-12 h-12 rounded-full"
+                                                    />
+                                                ) : (
+                                                    <div className="h-12 w-12 rounded-full bg-indigo-500 flex items-center justify-center text-white fs-5 font-bold border">
+                                                        {m.name
+                                                            .charAt(0)
+                                                            .toUpperCase()}
+                                                    </div>
+                                                )}
+                                                {m.name}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                {m.idcard}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                {m.phone}
+                                            </td>
+                                            <td className="px-4 py-3 capitalize">
+                                                {m.gender}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                {m.birth_date}
+                                            </td>
+                                            <td className="py-3 text-center w-60">
+                                                {new Intl.DateTimeFormat(
+                                                    "en-US",
+                                                    {
+                                                        year: "numeric",
+                                                        month: "long",
+                                                        day: "2-digit",
+                                                        hour: "2-digit",
+                                                        minute: "2-digit",
+                                                    }
+                                                ).format(
+                                                    new Date(m.created_at)
+                                                )}
+                                            </td>
+                                        </motion.tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td
+                                            colSpan="7"
+                                            className="px-4 py-10 text-center text-gray-300"
+                                        >
+                                            No members found.
                                         </td>
-                                        <td className="px-4 py-3 font-semibold flex items-center gap-3">
-                                            {m.image ? (
-                                                <img
-                                                    src={m.image}
-                                                    className="border border-white/10 w-12 h-12 rounded-full"
-                                                />
-                                            ) : (
-                                                <div className="h-12 w-12 rounded-full bg-indigo-500 flex items-center justify-center text-white fs-5 font-bold border">
-                                                    {m.name
-                                                        .charAt(0)
-                                                        .toUpperCase()}
-                                                </div>
-                                            )}
-                                            {m.name}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            {m.idcard}
-                                        </td>
-                                        <td className="px-4 py-3">{m.phone}</td>
-                                        <td className="px-4 py-3 capitalize">
-                                            {m.gender}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            {m.birth_date}
-                                        </td>
-                                        <td className="py-3 text-center w-60">
-                                            {new Intl.DateTimeFormat("en-US", {
-                                                year: "numeric",
-                                                month: "long",
-                                                day: "2-digit",
-                                                hour: "2-digit",
-                                                minute: "2-digit",
-                                            }).format(new Date(m.created_at))}
-                                        </td>
-                                    </motion.tr>
-                                ))}
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
                     </div>
@@ -180,21 +212,23 @@ export default function Members({ user, members }) {
                     {/* Pagination */}
                     <div className="flex justify-between items-center p-4 bg-white/5 border-t border-white/10">
                         <button
-                            onClick={() => setPage((p) => Math.max(1, p - 1))}
-                            className="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-xs"
+                            onClick={() => goToPage(members.prev_page_url)}
+                            disabled={!members.prev_page_url}
+                            className="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-xs disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             Previous
                         </button>
 
                         <span className="text-xs text-gray-300">
-                            Page {page} of {totalPages}
+                            Page {members.current_page ?? 1} of{" "}
+                            {members.last_page ?? 1} ({members.total ?? 0}{" "}
+                            members)
                         </span>
 
                         <button
-                            onClick={() =>
-                                setPage((p) => Math.min(totalPages, p + 1))
-                            }
-                            className="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-xs"
+                            onClick={() => goToPage(members.next_page_url)}
+                            disabled={!members.next_page_url}
+                            className="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-xs disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             Next
                         </button>
