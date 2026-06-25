@@ -41,7 +41,10 @@ class NotificationController extends Controller
         $notification = $this->model->find($id);
 
         if ($notification->recipient === 'specific') {
-            $notification['user'] = User::where('id', UserNotification::where('notification_id', $notification->id)->first()->user_id)->select('id', 'name', 'idcard', 'phone')->first();
+            $userId = UserNotification::where('notification_id', $notification->id)->value('user_id');
+            $notification['user'] = $userId
+                ? User::where('id', $userId)->select('id', 'name', 'idcard', 'phone')->first()
+                : null;
         }
 
         $notification->image = $notification->image ? url("storage/notifications/" . $notification->image) : null;

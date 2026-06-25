@@ -18,9 +18,11 @@ class NotificationResource extends JsonResource
     {
         $data = parent::toArray($request);
 
-        if($data['recipient'] === 'specific') {
-
-            $data['user'] = User::where('id', UserNotification::where('notification_id', $data['id'])->first()->user_id)->first()->name;
+        if ($data['recipient'] === 'specific') {
+            $userId = UserNotification::where('notification_id', $data['id'])->value('user_id');
+            $data['user'] = $userId
+                ? User::where('id', $userId)->value('name')
+                : 'Processing...';
         }
 
         $data['image'] = $data['image'] ? url("storage/notifications/".$data['image']) : null;
