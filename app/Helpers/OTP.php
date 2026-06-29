@@ -6,8 +6,8 @@ use Illuminate\Support\Facades\Http;
 
 function generateOtp($phone)
 {
-    $token = env('SMSPoh_TOKEN');
-    $end_point = env('SMSPoh_ENDPOINT');
+    $token = config('app.smspoh_token');
+    $end_point = config('app.smspoh_endpoint');
     $formatted_phone_number = formatPhoneNumber($phone);
     $otp = rand(100000, 999999);
 

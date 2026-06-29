@@ -65,11 +65,6 @@ export default function EditPrivilege({ privilege, user, categories }) {
             hasError = true;
         }
 
-        if (!data.image) {
-            setError("image", "Image is required");
-            hasError = true;
-        }
-
         if (hasError) return;
 
         post("/privileges/update", { forceFormData: true });

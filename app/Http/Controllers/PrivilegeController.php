@@ -84,7 +84,7 @@ class PrivilegeController extends Controller
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date'],
             'category_id' => ['required', 'exists:privilege_categories,id'],
-            'image' => ['required', 'image'],
+            'image' => ['nullable', 'image'],
             'is_active' => ['required', 'boolean'],
         ]);
 

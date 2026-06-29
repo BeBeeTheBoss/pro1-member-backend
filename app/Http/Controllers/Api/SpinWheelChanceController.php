@@ -55,6 +55,7 @@ class SpinWheelChanceController extends Controller
 
             $super_prize->max_times -= 1;
             $super_prize->save();
+            $points = $super_prize;
         } else {
             $points = SpinWheelChanceDaily::whereDate('date', now()->toDateString())
                 ->whereIn('type', ['fix_prize', 'other'])
@@ -79,7 +80,7 @@ class SpinWheelChanceController extends Controller
             'user_id' => $user->id,
             'spin_wheel_chance_daily_id' => $points->id,
             'reward_points' => $points->points,
-            'at_max_times' => $points->max_times - 1,
+            'at_max_times' => $points->max_times,
             'date' => now(),
             'spun_at' => now(),
         ]);

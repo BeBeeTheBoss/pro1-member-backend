@@ -1,23 +1,21 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Activity, Clock, MessageSquare, Star, Timer, UserCheck, Users } from "lucide-react";
-
-const formatDuration = (seconds = 0) => {
-    const totalSeconds = Number(seconds) || 0;
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-
-    if (hours > 0) {
-        return `${hours}h ${minutes}m`;
-    }
-
-    return `${minutes}m`;
-};
+import {
+    Gift,
+    ListChecks,
+    MessageSquare,
+    RotateCw,
+    Sparkles,
+    Star,
+    Target,
+    Trophy,
+    Users,
+} from "lucide-react";
 
 const formatNumber = (value = 0) => new Intl.NumberFormat("en-US").format(value);
 
 const formatDateTime = (dateTime) => {
     if (!dateTime) {
-        return "No activity";
+        return "No spin time";
     }
 
     return new Intl.DateTimeFormat("en-US", {
@@ -27,6 +25,13 @@ const formatDateTime = (dateTime) => {
         minute: "2-digit",
     }).format(new Date(dateTime.replace(" ", "T")));
 };
+
+const formatPrizeType = (type = "") =>
+    type
+        .split("_")
+        .filter(Boolean)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ") || "Unknown";
 
 const StatCard = ({ title, value, helper, icon: Icon, accent }) => (
     <div className="rounded-lg border border-white/10 bg-white/[0.07] p-4 shadow">
@@ -50,14 +55,14 @@ const StatCard = ({ title, value, helper, icon: Icon, accent }) => (
 
 const EmptyChart = () => (
     <div className="grid h-64 place-items-center rounded-lg border border-dashed border-white/15 text-sm text-gray-400">
-        No usage data yet
+        No spin wheel data yet
     </div>
 );
 
-const DailyUsageChart = ({ rows }) => {
-    const maxSeconds = Math.max(...rows.map((row) => row.total_seconds), 0);
-    const maxSessions = Math.max(...rows.map((row) => row.session_count), 0);
-    const hasData = maxSeconds > 0 || maxSessions > 0;
+const DailySpinChart = ({ rows }) => {
+    const maxSpins = Math.max(...rows.map((row) => row.spin_count), 0);
+    const maxRewards = Math.max(...rows.map((row) => row.reward_points), 0);
+    const hasData = maxSpins > 0 || maxRewards > 0;
 
     if (!hasData) {
         return <EmptyChart />;
@@ -70,7 +75,7 @@ const DailyUsageChart = ({ rows }) => {
     const chartHeight = height - padding.top - padding.bottom;
     const barGap = 10;
     const barWidth = chartWidth / rows.length - barGap;
-    const points = rows.map((row, index) => {
+    const rewardPoints = rows.map((row, index) => {
         const x =
             padding.left +
             index * (chartWidth / rows.length) +
@@ -78,7 +83,7 @@ const DailyUsageChart = ({ rows }) => {
         const y =
             padding.top +
             chartHeight -
-            (row.session_count / Math.max(maxSessions, 1)) * chartHeight;
+            (row.reward_points / Math.max(maxRewards, 1)) * chartHeight;
 
         return `${x},${y}`;
     });
@@ -89,7 +94,7 @@ const DailyUsageChart = ({ rows }) => {
                 viewBox={`0 0 ${width} ${height}`}
                 className="h-72 min-w-[760px] text-gray-300"
                 role="img"
-                aria-label="Daily member app usage and session count"
+                aria-label="Daily spin count and reward points"
             >
                 <line
                     x1={padding.left}
@@ -113,7 +118,7 @@ const DailyUsageChart = ({ rows }) => {
                             textAnchor="end"
                             className="fill-gray-400 text-[11px]"
                         >
-                            {formatDuration(maxSeconds * tick)}
+                            {formatNumber(Math.round(maxSpins * tick))}
                         </text>
                     </g>
                 ))}
@@ -121,8 +126,7 @@ const DailyUsageChart = ({ rows }) => {
                     const x =
                         padding.left + index * (chartWidth / rows.length) + barGap / 2;
                     const barHeight =
-                        (row.total_seconds / Math.max(maxSeconds, 1)) *
-                        chartHeight;
+                        (row.spin_count / Math.max(maxSpins, 1)) * chartHeight;
                     const y = padding.top + chartHeight - barHeight;
 
                     return (
@@ -133,8 +137,16 @@ const DailyUsageChart = ({ rows }) => {
                                 width={Math.max(barWidth, 8)}
                                 height={barHeight}
                                 rx="4"
-                                fill="#14b8a6"
+                                fill="#22c55e"
                             />
+                            {row.super_prize_count > 0 ? (
+                                <circle
+                                    cx={x + Math.max(barWidth, 8) / 2}
+                                    cy={Math.max(y - 8, 10)}
+                                    r="4"
+                                    fill="#facc15"
+                                />
+                            ) : null}
                             <text
                                 x={x + Math.max(barWidth, 8) / 2}
                                 y={height - 16}
@@ -147,26 +159,26 @@ const DailyUsageChart = ({ rows }) => {
                     );
                 })}
                 <polyline
-                    points={points.join(" ")}
+                    points={rewardPoints.join(" ")}
                     fill="none"
-                    stroke="#f59e0b"
+                    stroke="#38bdf8"
                     strokeWidth="3"
                     strokeLinejoin="round"
                     strokeLinecap="round"
                 />
                 {rows.map((row, index) => {
-                    const [x, y] = points[index].split(",");
+                    const [x, y] = rewardPoints[index].split(",");
                     return (
                         <circle
-                            key={`${row.date}-point`}
+                            key={`${row.date}-reward`}
                             cx={x}
                             cy={y}
                             r="4"
-                            fill="#f59e0b"
+                            fill="#38bdf8"
                         >
                             <title>
-                                {row.label}: {formatDuration(row.total_seconds)},{" "}
-                                {row.session_count} sessions
+                                {row.label}: {formatNumber(row.spin_count)} spins,{" "}
+                                {formatNumber(row.reward_points)} points
                             </title>
                         </circle>
                     );
@@ -176,55 +188,16 @@ const DailyUsageChart = ({ rows }) => {
     );
 };
 
-const TopMembersChart = ({ members }) => {
-    const maxUsage = Math.max(
-        ...members.map((member) => member.total_usage_time_in_seconds),
-        0
-    );
-
-    if (maxUsage === 0) {
-        return <EmptyChart />;
-    }
-
-    return (
-        <div className="space-y-4">
-            {members.map((member, index) => {
-                const percent =
-                    (member.total_usage_time_in_seconds / Math.max(maxUsage, 1)) *
-                    100;
-
-                return (
-                    <div key={member.id} className="grid gap-2">
-                        <div className="flex items-center justify-between gap-4 text-sm">
-                            <div className="min-w-0">
-                                <p className="truncate font-semibold text-white">
-                                    {index + 1}. {member.name}
-                                </p>
-                                <p className="text-xs text-gray-400">{member.phone}</p>
-                            </div>
-                            <span className="shrink-0 text-gray-200">
-                                {formatDuration(member.total_usage_time_in_seconds)}
-                            </span>
-                        </div>
-                        <div className="h-3 overflow-hidden rounded bg-white/10">
-                            <div
-                                className="h-full rounded bg-cyan-400"
-                                style={{ width: `${Math.max(percent, 4)}%` }}
-                            />
-                        </div>
-                    </div>
-                );
-            })}
-        </div>
-    );
-};
-
 export default function Dashboard({ user, dashboard }) {
     const stats = dashboard?.stats ?? {};
-    const dailyUsage = dashboard?.daily_usage ?? [];
-    const topMembers = dashboard?.top_members ?? [];
-    const recentMembers = dashboard?.recent_members ?? [];
+    const dailySpins = dashboard?.daily_spins ?? [];
+    const todayChances = dashboard?.today_chances ?? [];
+    const recentSpinRecords = dashboard?.recent_spin_records ?? [];
     const recentFeedbacks = dashboard?.recent_feedbacks ?? [];
+    const targetPercent =
+        stats.super_prize_target > 0
+            ? Math.min((stats.super_prize_progress / stats.super_prize_target) * 100, 100)
+            : 0;
 
     return (
         <AuthenticatedLayout user={user}>
@@ -233,11 +206,11 @@ export default function Dashboard({ user, dashboard }) {
                     <div>
                         <h4 className="text-2xl font-bold text-white">Dashboard</h4>
                         <p className="mt-1 text-sm text-gray-300">
-                            Member totals, app usage time, and session activity.
+                            Spin wheel chances, reward records, and super prize progress.
                         </p>
                     </div>
                     <div className="rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-gray-300">
-                        Last 14 days usage overview
+                        Last 14 days spin overview
                     </div>
                 </div>
 
@@ -245,30 +218,37 @@ export default function Dashboard({ user, dashboard }) {
                     <StatCard
                         title="Total members"
                         value={formatNumber(stats.total_members)}
-                        helper={`${formatNumber(stats.recent_active_members)} active in the last 7 days`}
+                        helper="Registered members in the system"
                         icon={Users}
                         accent="#2563eb"
                     />
                     <StatCard
-                        title="Active sessions"
-                        value={formatNumber(stats.active_sessions)}
-                        helper="Sessions currently without an inactive time"
-                        icon={Activity}
+                        title="Today spins"
+                        value={formatNumber(stats.today_spins)}
+                        helper={`${formatNumber(stats.today_reward_points)} reward points today`}
+                        icon={RotateCw}
                         accent="#16a34a"
                     />
                     <StatCard
-                        title="Today sessions"
-                        value={formatNumber(stats.today_sessions)}
-                        helper={`${formatDuration(stats.today_usage_seconds)} tracked today`}
-                        icon={Timer}
+                        title="Total spins"
+                        value={formatNumber(stats.total_spins)}
+                        helper="All spin records saved"
+                        icon={ListChecks}
+                        accent="#0891b2"
+                    />
+                    <StatCard
+                        title="Remaining chances"
+                        value={formatNumber(stats.today_remaining_chances)}
+                        helper={`${formatNumber(stats.today_super_prize_remaining)} super prize chances left`}
+                        icon={Gift}
                         accent="#d97706"
                     />
                     <StatCard
-                        title="Total usage"
-                        value={formatDuration(stats.total_usage_seconds)}
-                        helper="Accumulated from member usage totals"
-                        icon={Clock}
-                        accent="#0891b2"
+                        title="Super target"
+                        value={formatNumber(stats.super_prize_target)}
+                        helper={`${formatNumber(stats.spins_until_super_prize)} spins until next target`}
+                        icon={Target}
+                        accent="#db2777"
                     />
                     <StatCard
                         title="Feedbacks"
@@ -286,44 +266,130 @@ export default function Dashboard({ user, dashboard }) {
                     />
                 </div>
 
-                <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.6fr)]">
+                <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
                     <section className="min-w-0">
                         <div className="mb-4 flex items-center justify-between gap-4">
                             <div>
                                 <h5 className="text-lg font-semibold text-white">
-                                    Daily Usage Trend
+                                    Daily Spin Trend
                                 </h5>
                                 <p className="text-xs text-gray-400">
-                                    Teal bars show usage time. Amber line shows sessions.
+                                    Green bars show spins. Blue line shows reward points.
                                 </p>
                             </div>
                         </div>
-                        <DailyUsageChart rows={dailyUsage} />
+                        <DailySpinChart rows={dailySpins} />
                     </section>
 
                     <section className="min-w-0">
                         <div className="mb-4 flex items-center gap-2">
-                            <UserCheck className="h-5 w-5 text-cyan-300" />
+                            <Trophy className="h-5 w-5 text-yellow-300" />
                             <div>
                                 <h5 className="text-lg font-semibold text-white">
-                                    Top Usage Members
+                                    Super Prize Progress
                                 </h5>
                                 <p className="text-xs text-gray-400">
-                                    Ranked by total usage time.
+                                    Target comes from settings.super_prize_target.
                                 </p>
                             </div>
                         </div>
-                        <TopMembersChart members={topMembers} />
+                        <div className="rounded-lg border border-white/10 bg-white/[0.05] p-4">
+                            <div className="flex items-end justify-between gap-4">
+                                <div>
+                                    <p className="text-xs uppercase text-gray-400">
+                                        Current progress
+                                    </p>
+                                    <p className="mt-2 text-3xl font-bold text-white">
+                                        {formatNumber(stats.super_prize_progress)}
+                                        <span className="text-base font-medium text-gray-400">
+                                            /{formatNumber(stats.super_prize_target)}
+                                        </span>
+                                    </p>
+                                </div>
+                                <Sparkles className="h-8 w-8 text-yellow-300" />
+                            </div>
+                            <div className="mt-5 h-3 overflow-hidden rounded bg-white/10">
+                                <div
+                                    className="h-full rounded bg-yellow-300"
+                                    style={{ width: `${targetPercent}%` }}
+                                />
+                            </div>
+                            <p className="mt-3 text-xs text-gray-300">
+                                {formatNumber(stats.today_spins)} spins recorded today.
+                            </p>
+                        </div>
                     </section>
                 </div>
 
                 <section>
                     <div className="mb-4">
                         <h5 className="text-lg font-semibold text-white">
-                            Member Monitoring
+                            Today Chance Monitoring
                         </h5>
                         <p className="text-xs text-gray-400">
-                            Latest member activity with last logged in time and total usage.
+                            Daily chances decrease from spin_wheel_chances_daily as users spin.
+                        </p>
+                    </div>
+
+                    <div className="overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
+                        <div className="max-h-[360px] overflow-auto">
+                            <table className="w-full min-w-[760px] text-left text-sm">
+                                <thead className="sticky top-0 bg-slate-950/95 text-xs uppercase text-gray-400">
+                                    <tr>
+                                        <th className="px-4 py-3">Prize type</th>
+                                        <th className="px-4 py-3 text-right">Points</th>
+                                        <th className="px-4 py-3 text-right">Fixed value</th>
+                                        <th className="px-4 py-3 text-right">Awarded</th>
+                                        <th className="px-4 py-3 text-right">Remaining</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {todayChances.length > 0 ? (
+                                        todayChances.map((chance) => (
+                                            <tr
+                                                key={chance.key}
+                                                className="border-t border-white/5 hover:bg-white/[0.04]"
+                                            >
+                                                <td className="px-4 py-3 font-semibold text-white">
+                                                    {formatPrizeType(chance.type)}
+                                                </td>
+                                                <td className="px-4 py-3 text-right text-gray-300">
+                                                    {formatNumber(chance.points)}
+                                                </td>
+                                                <td className="px-4 py-3 text-right text-gray-300">
+                                                    {formatNumber(chance.configured_times)}
+                                                </td>
+                                                <td className="px-4 py-3 text-right text-gray-300">
+                                                    {formatNumber(chance.awarded_times)}
+                                                </td>
+                                                <td className="px-4 py-3 text-right text-gray-100">
+                                                    {formatNumber(chance.remaining_times)}
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td
+                                                colSpan="5"
+                                                className="px-4 py-8 text-center text-gray-400"
+                                            >
+                                                No daily spin chances available today.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <div className="mb-4">
+                        <h5 className="text-lg font-semibold text-white">
+                            Recent Spin Records
+                        </h5>
+                        <p className="text-xs text-gray-400">
+                            Latest user spins saved in spin_records.
                         </p>
                     </div>
 
@@ -334,44 +400,48 @@ export default function Dashboard({ user, dashboard }) {
                                     <tr>
                                         <th className="px-4 py-3">Member</th>
                                         <th className="px-4 py-3">Phone</th>
-                                        <th className="px-4 py-3">Last logged in</th>
-                                        <th className="px-4 py-3 text-right">
-                                            Total usage
-                                        </th>
+                                        <th className="px-4 py-3">Prize type</th>
+                                        <th className="px-4 py-3 text-right">Reward</th>
+                                        <th className="px-4 py-3 text-right">Remaining after</th>
+                                        <th className="px-4 py-3">Spun at</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {recentMembers.length > 0 ? (
-                                        recentMembers.map((member) => (
+                                    {recentSpinRecords.length > 0 ? (
+                                        recentSpinRecords.map((record) => (
                                             <tr
-                                                key={member.id}
+                                                key={record.id}
                                                 className="border-t border-white/5 hover:bg-white/[0.04]"
                                             >
                                                 <td className="px-4 py-3 font-semibold text-white">
-                                                    {member.name}
+                                                    {record.member?.name || "Unknown member"}
                                                 </td>
                                                 <td className="px-4 py-3 text-gray-300">
-                                                    {member.phone}
+                                                    {record.member?.phone || "-"}
                                                 </td>
                                                 <td className="px-4 py-3 text-gray-300">
-                                                    {formatDateTime(
-                                                        member.last_logged_in_time
-                                                    )}
+                                                    {formatPrizeType(record.type)}
                                                 </td>
                                                 <td className="px-4 py-3 text-right text-gray-100">
-                                                    {formatDuration(
-                                                        member.total_usage_time_in_seconds
-                                                    )}
+                                                    {formatNumber(record.reward_points)}
+                                                </td>
+                                                <td className="px-4 py-3 text-right text-gray-300">
+                                                    {record.remaining_after_spin === null
+                                                        ? "-"
+                                                        : formatNumber(record.remaining_after_spin)}
+                                                </td>
+                                                <td className="px-4 py-3 text-gray-300">
+                                                    {formatDateTime(record.spun_at)}
                                                 </td>
                                             </tr>
                                         ))
                                     ) : (
                                         <tr>
                                             <td
-                                                colSpan="4"
+                                                colSpan="6"
                                                 className="px-4 py-8 text-center text-gray-400"
                                             >
-                                                No member activity recorded yet.
+                                                No spin records saved yet.
                                             </td>
                                         </tr>
                                     )}
