@@ -43,6 +43,7 @@ Route::get('/spin-wheel-chances', [SpinWheelChanceController::class, 'index']);
 Route::get('/getLatestVersion', [SettingController::class, 'getLatestVersion'])->name('getLatestVersion');
 
 
+    Route::get('/privileges', [PrivilegeController::class, 'index']);
 
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -50,6 +51,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/password-reset-records', 'passwordResetRecords')->name('passwordResetRecords');
         Route::post('/set-push-token', 'setPushToken')->name('setPushToken');
         Route::post('/set-app-version', 'setAppVersion')->name('setAppVersion');
+        Route::post('/delete-account', 'deleteAccount')->name('deleteAccount');
         Route::post('/logout', 'logout')->name('logout');
     });
 
@@ -108,7 +110,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/popups', [PopupController::class, 'index']);
 
-    Route::get('/privileges', [PrivilegeController::class, 'index']);
+    // Route::get('/privileges', [PrivilegeController::class, 'index']);
     Route::get('/privilege-categories', [PrivilegeCategoryController::class, 'index']);
 
     Route::post('/spin-wheel-play', [SpinWheelChanceController::class, 'play']);

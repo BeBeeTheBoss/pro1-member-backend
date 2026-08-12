@@ -14,6 +14,8 @@ class SettingController extends Controller
 
     public function index()
     {
+
+    info("Hello");
         $settings = $this->model->orderBy('attribute')->get();
         $user = Auth::guard('admin')->user();
 

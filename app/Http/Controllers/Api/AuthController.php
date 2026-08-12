@@ -172,7 +172,7 @@ class AuthController extends Controller
             return sendResponse(null, 404, "User not found");
         }
 
-        $user = $this->model->where('phone', $member_info->mobile)->first();
+        $user = $this->model->where('phone', $member_info->mobile)->where('is_deleted',false)->first();
 
         if (!$user) {
             return sendResponse(null, 404, "User not found");

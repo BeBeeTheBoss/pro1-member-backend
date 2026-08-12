@@ -54,9 +54,9 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
-    'smspoh_token' => env('SMSPoh_TOKEN') ?? "YXN4OVpTMTEwc004dGxodkF5bDJUcTVkY1ZUMWwzbUI6ZmZzdnJzZFJIZmVBNDljMFI3bU5haFhEd3BZMEc4UzE=",
+    'smspoh_token' => "YXN4OVpTMTEwc004dGxodkF5bDJUcTVkY1ZUMWwzbUI6ZmZzdnJzZFJIZmVBNDljMFI3bU5haFhEd3BZMEc4UzE=",
 
-    'smspoh_endpoint' => env('SMSPoh_ENDPOINT') ?? "https://v3.smspoh.com/api/rest/send",
+    'smspoh_endpoint' => "https://v3.smspoh.com/api/rest/send",
 
     /*
     |--------------------------------------------------------------------------

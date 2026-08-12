@@ -22,6 +22,7 @@ use App\Models\PasswordResetRecord;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Container\Attributes\Log;
 use Illuminate\Support\Facades\Log as FacadesLog;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -246,8 +247,9 @@ class UserController extends Controller
     {
         $user = $this->model->where('idcard', $request->idcard)->first();
 
+
         if (!$user) {
-            return sendResponse(null, 404, "User not found");
+            return sendResponse(null, 404, "You are not registerd yet. Please register first");
         }
 
         DB::beginTransaction();
@@ -256,6 +258,8 @@ class UserController extends Controller
             $user->save();
 
             $this->storePasswordResetRecord($user, $request, 'forgot_password');
+
+            FacadesLog::info($request);
 
             DB::commit();
         } catch (Exception $e) {
@@ -636,6 +640,7 @@ class UserController extends Controller
     public function validatePointRedemptionQR(Request $request)
     {
 
+
         $qrCode = $request->qrCode;
         $idcard = explode('|', $qrCode)[1];
         info($idcard);
@@ -678,6 +683,8 @@ class UserController extends Controller
             ->where('user_id', $user->id)
             ->where('timestamp', $request->timestamp)
             ->first();
+
+        FacadesLog::info($qrcode);
 
         if (!$qrcode) {
             return response()->json([
@@ -1290,9 +1297,9 @@ class UserController extends Controller
         $user = $this->model->where('idcard', $request->idcard)->first();
         if (!$user) {
             return response()->json([
-                'responseCode' => '0',
-                'responseMessage' => 'Member Card No is invalid',
-            ]);
+            'responseCode' => '1',
+            'responseMessage' => 'Member is not registered yet!'
+        ]);
         }
 
         $user->name = $request->name ?? $user->name;
@@ -1331,6 +1338,25 @@ class UserController extends Controller
 
         $this->model->where('idcard', $request->idcard)->update([
             'app_version' => $request->app_version
+        ]);
+    }
+
+    public function deleteAccount(Request $request){
+
+        $user = $this->model->find(Auth::user()->id);
+        if (!$user) {
+            return response()->json([
+                'responseCode' => '0',
+                'responseMessage' => 'User not found'
+            ]);
+        }
+
+        $user->is_deleted = true;
+        $user->save();
+
+        return response()->json([
+            'responseCode' => '1',
+            'responseMessage' => 'Account deleted successfully'
         ]);
     }
 
