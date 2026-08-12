@@ -25,6 +25,7 @@ class User extends Authenticatable
         'phone',
         'password',
         'isFLPUsed',
+        'is_wp_used',
         'birth_date',
         'gender',
         'image',
@@ -64,6 +65,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'last_logged_in_time' => 'datetime',
             'total_usage_time_in_seconds' => 'integer',
+            'is_wp_used' => 'boolean',
             // 'password' => 'hashed',
         ];
     }
