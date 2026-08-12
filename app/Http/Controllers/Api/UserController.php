@@ -171,6 +171,40 @@ class UserController extends Controller
             return sendResponse(null, 405, "OTP Code is expired");
         }
 
+        $user = User::where('phone', $request->phone)->update(['is_active' => true]);
+
+        if ($user->is_wp_used == false) {
+
+            $noti_title = "System";
+            $noti_message = "Congrats! Your first login coupon is ready. Redeem it in My Coupons to get 20 points.";
+
+            $timestamp = Carbon::now()->getTimestamp() * 1000;
+
+            $json = [
+                'memberCardNo' => $user->idcard,
+                'timestamp' => (string) $timestamp,
+            ];
+
+            $secret_key = env('SECRET_KEY');
+
+            $jsonString = json_encode($json);
+
+            $payload = $jsonString . $secret_key;
+
+            $calculatedHash = hash('sha256', $payload);
+
+            $json['hashValue'] = $calculatedHash;
+
+            $response = Http::post("https://memberuat.sdpghc.net:2004/api/coupon/getFirstCoupon", $json);
+
+            if ($response['success'] === true) {
+                sendPushNotification($user->expo_push_token, $noti_title, $noti_message);
+            }
+
+            $user->is_wp_used = true;
+            $user->save();
+        }
+
         return sendResponse(null, 200);
     }
 
@@ -1297,9 +1331,9 @@ class UserController extends Controller
         $user = $this->model->where('idcard', $request->idcard)->first();
         if (!$user) {
             return response()->json([
-            'responseCode' => '1',
-            'responseMessage' => 'Member is not registered yet!'
-        ]);
+                'responseCode' => '1',
+                'responseMessage' => 'Member is not registered yet!'
+            ]);
         }
 
         $user->name = $request->name ?? $user->name;
@@ -1341,7 +1375,8 @@ class UserController extends Controller
         ]);
     }
 
-    public function deleteAccount(Request $request){
+    public function deleteAccount(Request $request)
+    {
 
         $user = $this->model->find(Auth::user()->id);
         if (!$user) {
