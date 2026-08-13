@@ -171,7 +171,7 @@ class UserController extends Controller
             return sendResponse(null, 405, "OTP Code is expired");
         }
 
-        $user = User::where('phone', $request->phone)->update(['is_active' => true]);
+        $user = User::where('phone', $request->phone)->first();
 
         if ($user->is_wp_used == false) {
 
