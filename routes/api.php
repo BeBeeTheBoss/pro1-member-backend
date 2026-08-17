@@ -41,7 +41,7 @@ Route::get('/events', [EventController::class, 'index']);
 
 Route::get('/spin-wheel-chances', [SpinWheelChanceController::class, 'index']);
 Route::get('/getLatestVersion', [SettingController::class, 'getLatestVersion'])->name('getLatestVersion');
-
+Route::get('/getIsForceUpdate', [SettingController::class, 'getIsForceUpdate'])->name('getIsForceUpdate');
 
     Route::get('/privileges', [PrivilegeController::class, 'index']);
 

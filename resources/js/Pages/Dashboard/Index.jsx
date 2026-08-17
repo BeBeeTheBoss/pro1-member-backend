@@ -8,6 +8,7 @@ import {
     Star,
     Target,
     Trophy,
+    UserCheck,
     Users,
 } from "lucide-react";
 
@@ -265,6 +266,38 @@ export default function Dashboard({ user, dashboard }) {
                         accent="#eab308"
                     />
                 </div>
+
+                <section>
+                    <div className="mb-4">
+                        <h5 className="text-lg font-semibold text-white">New App Activity</h5>
+                        <p className="text-xs text-gray-400">
+                            Member activity since {stats.new_app_activity_start_date || "the 14th"}.
+                        </p>
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-3">
+                        <StatCard
+                            title="New register"
+                            value={formatNumber(stats.new_registers)}
+                            helper="Accounts created since the 14th"
+                            icon={Users}
+                            accent="#4f46e5"
+                        />
+                        <StatCard
+                            title="Old acc sign in"
+                            value={formatNumber(stats.old_account_sign_ins)}
+                            helper="Existing accounts active in the new app"
+                            icon={UserCheck}
+                            accent="#16a34a"
+                        />
+                        <StatCard
+                            title="Total"
+                            value={formatNumber(stats.new_app_activity_total)}
+                            helper="Members updated since the 14th"
+                            icon={ListChecks}
+                            accent="#0891b2"
+                        />
+                    </div>
+                </section>
 
                 <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
                     <section className="min-w-0">

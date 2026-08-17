@@ -27,4 +27,23 @@ class SettingController extends Controller
             'latest_version' => $latestVersion,
         ], 200);
     }
+
+    public function getIsForceUpdate(Request $request){
+        $deviceType = $request->input('device_type') ?? "ios";
+
+        if($deviceType === 'android') {
+            $isForceUpdate = Setting::where('attribute', 'is_android_force_update')->value('value');
+        }else{
+            $isForceUpdate = Setting::where('attribute', 'is_ios_force_update')->value('value');
+        }
+
+        if (!$isForceUpdate) {
+            return sendResponse(null, 404, 'Force update information not found');
+        }
+
+        return sendResponse([
+            'is_force_update' => $isForceUpdate,
+        ], 200);
+    }
+
 }

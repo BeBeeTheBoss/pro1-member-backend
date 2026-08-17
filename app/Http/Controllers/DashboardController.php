@@ -20,6 +20,11 @@ class DashboardController extends Controller
         $admin = Auth::guard('admin')->user();
         $today = Carbon::today();
         $startDate = Carbon::today()->subDays(13);
+        // The new app was released on 2026-08-14, so activity starts from
+        // midnight on that fixed launch date.
+        $newAppStartDate = Carbon::create(2026, 8, 14)->startOfDay();
+        $newRegisterCount = User::where('created_at', '>=', $newAppStartDate)->count();
+        $newAppActivityTotal = User::where('updated_at', '>=', $newAppStartDate)->count();
 
         $dailySpinRows = SpinRecord::query()
             ->leftJoin('spin_wheel_chances_daily', 'spin_records.spin_wheel_chance_daily_id', '=', 'spin_wheel_chances_daily.id')
@@ -146,6 +151,10 @@ class DashboardController extends Controller
         $dashboard = [
             'stats' => [
                 'total_members' => User::count(),
+                'new_app_activity_start_date' => $newAppStartDate->toDateString(),
+                'new_registers' => $newRegisterCount,
+                'old_account_sign_ins' => max(0, $newAppActivityTotal - $newRegisterCount),
+                'new_app_activity_total' => $newAppActivityTotal,
                 'today_spins' => $todaySpinCount,
                 'total_spins' => SpinRecord::count(),
                 'today_reward_points' => (int) SpinRecord::whereDate('date', $today)->sum('reward_points'),
