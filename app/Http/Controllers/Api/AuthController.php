@@ -100,7 +100,7 @@ class AuthController extends Controller
             $member_info['branch_name'] = $branch_name;
 
             $noti_title = "System";
-            $noti_message = "Congrats! Your first login coupon is ready. Redeem it in My Coupons to get 20 points.";
+            $noti_message = "Congrats! Your first login coupon is ready. Redeem it in My Coupons to get 30 points.";
 
             $timestamp = Carbon::now()->getTimestamp() * 1000;
 
@@ -119,7 +119,7 @@ class AuthController extends Controller
 
             $json['hashValue'] = $calculatedHash;
 
-            $response = Http::post("https://memberuat.sdpghc.net:2004/api/coupon/getFirstCoupon", $json);
+            $response = Http::post("https://member.sdpghc.net:56111/api/coupon/getFirstCoupon", $json);
 
             if ($response['success'] === true) {
                 sendPushNotification($request->expo_push_token, $noti_title, $noti_message);

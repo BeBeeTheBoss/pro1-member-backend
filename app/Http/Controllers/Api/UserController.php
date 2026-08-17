@@ -173,7 +173,7 @@ class UserController extends Controller
 
         $user = User::where('phone', $request->phone)->first();
 
-        if ($user->is_wp_used == false) {
+        if ($user != null && $user->is_wp_used == false) {
 
             $noti_title = "System";
             $noti_message = "Congrats! Your first login coupon is ready. Redeem it in My Coupons to get 20 points.";
@@ -195,9 +195,9 @@ class UserController extends Controller
 
             $json['hashValue'] = $calculatedHash;
 
-            $response = Http::post("https://memberuat.sdpghc.net:2004/api/coupon/getFirstCoupon", $json);
+            $response = Http::post("https://member.sdpghc.net:56111/api/coupon/getFirstCoupon", $json);
 
-            if ($response['success'] === true) {
+            if ($response != null && $response['success'] === true) {
                 sendPushNotification($user->expo_push_token, $noti_title, $noti_message);
             }
 
@@ -279,6 +279,11 @@ class UserController extends Controller
 
     public function forgotPassword(Request $request)
     {
+
+    if (empty($request->newPassword) || strlen($request->newPassword) < 4) {
+        return sendResponse(null, 400, "Password must be at least 4 characters");
+    }
+
         $user = $this->model->where('idcard', $request->idcard)->first();
 
 

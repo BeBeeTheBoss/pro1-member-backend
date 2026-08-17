@@ -18,6 +18,8 @@ function generateOtp($phone)
         $otp = 222222;
     }else if($formatted_phone_number == '95920260202') {
         $otp = 333333;
+    }else if($formatted_phone_number == '95920260813'){
+        $otp = 000000;
     }
 
     RequestedOtp::where('phone', $phone)->delete();
