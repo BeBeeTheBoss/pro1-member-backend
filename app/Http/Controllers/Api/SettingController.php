@@ -46,4 +46,16 @@ class SettingController extends Controller
         ], 200);
     }
 
+    public function getIsUnderMaintenance(Request $request){
+        $isUnderMaintenance = Setting::where('attribute', 'is_under_maintenance')->value('value');
+
+        if (!$isUnderMaintenance) {
+            return sendResponse(null, 404, 'Under maintenance information not found');
+        }
+
+        return sendResponse([
+            'is_under_maintenance' => $isUnderMaintenance,
+        ], 200);
+    }
+
 }
