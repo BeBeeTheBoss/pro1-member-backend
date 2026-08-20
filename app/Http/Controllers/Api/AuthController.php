@@ -9,6 +9,7 @@ use App\Models\Notification;
 use Illuminate\Http\Request;
 use App\Models\SelectedCoupon;
 use App\Models\UserNotification;
+use App\Support\GenderNormalizer;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -23,6 +24,8 @@ class AuthController extends Controller
     {
 
         info($request->all());
+
+        $gender = GenderNormalizer::normalize($request->input('gender'));
 
         $cloud_db = DB::connection('Cloud');
 
@@ -46,7 +49,7 @@ class AuthController extends Controller
                 'phone' => $request->mobile,
                 'password' => hash('sha256', $request->password),
                 'birth_date' => Carbon::parse($request->birthdate)->format('Y-m-d'),
-                'gender' => $request->gender,
+                'gender' => $gender,
                 'device_id' => $request->device_id,
                 'device_name' => $request->device_name,
                 'expo_push_token' => $request->expo_push_token,

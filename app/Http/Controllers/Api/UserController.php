@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Support\GenderNormalizer;
 use Exception;
 use Carbon\Carbon;
 use App\Models\User;
@@ -372,7 +373,9 @@ class UserController extends Controller
             $user->image = $filename;
         }
 
-        $user->gender = $request->gender;
+        if ($request->has('gender')) {
+            $user->gender = GenderNormalizer::normalize($request->input('gender'));
+        }
         $user->save();
 
         $user->image = url("storage/profile_images/" . $user->image);
@@ -1344,7 +1347,9 @@ class UserController extends Controller
         $user->name = $request->name ?? $user->name;
         $user->phone = $request->phone ?? $user->phone;
         $user->birth_date = $request->birth_date ?? $user->birth_date;
-        $user->gender = $request->gender ?? $user->gender;
+        if ($request->has('gender')) {
+            $user->gender = GenderNormalizer::normalize($request->input('gender'));
+        }
         $user->branch_code = $request->branch_code ?? $user->branch_code;
         $user->save();
 
