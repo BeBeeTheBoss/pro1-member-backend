@@ -196,7 +196,7 @@ class UserController extends Controller
 
             $json['hashValue'] = $calculatedHash;
 
-            $response = Http::post("https://member.sdpghc.net:56111/api/coupon/getFirstCoupon", $json);
+            $response = Http::post("https://memberapi.sdpghc.net/api/coupon/getFirstCoupon", $json);
 
             if ($response != null && $response['success'] === true) {
                 sendPushNotification($user->expo_push_token, $noti_title, $noti_message);

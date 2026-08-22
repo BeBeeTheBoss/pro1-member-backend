@@ -15,6 +15,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log as FacadesLog;
 
 class AuthController extends Controller
 {
@@ -42,6 +43,26 @@ class AuthController extends Controller
                     'nrc_array_id' => $request->tax_code,
                     'date_birthday' => Carbon::parse($request->birthdate)->format('Y-m-d')
                 ]);
+                
+                $existing_user = $this->model->where('phone',$request->mobile)->first();
+                
+                if($existing_user){
+                    return sendResponse(null,405,'Phone number already registered');
+                }
+
+                $existing_user = $this->model->where('idcard',$request->idcard)->first();
+                if($existing_user){
+                    return sendResponse(null,405,'ID card already registered');
+                }
+
+                $member_info = $cloud_db->table(table: 'public.gbh_customer')
+                ->where('identification_card', $request->idcard)
+                ->first();
+
+                $existing_user = $this->model->where('customer_code',$member_info->customer_barcode)->first();
+                if($existing_user){
+                    return sendResponse(null,405,'Customer barcode already registered');
+                }
 
             $user = $this->model->create([
                 'name' => $request->fullname,
@@ -67,10 +88,6 @@ class AuthController extends Controller
 
             Auth::loginUsingId($user->id);
             $token = $user->createToken('auth_token')->plainTextToken;
-
-            $member_info = $cloud_db->table(table: 'public.gbh_customer')
-                ->where('identification_card', $request->idcard)
-                ->first();
 
             $user->branch_code = $member_info->branch_code;
             $user->customer_code = $member_info->customer_barcode;
@@ -122,7 +139,9 @@ class AuthController extends Controller
 
             $json['hashValue'] = $calculatedHash;
 
-            $response = Http::post("https://member.sdpghc.net:56111/api/coupon/getFirstCoupon", $json);
+            $response = Http::post("https://memberapi.sdpghc.net/api/coupon/getFirstCoupon", $json);
+
+            FacadesLog::info($response);
 
             if ($response['success'] === true) {
                 sendPushNotification($request->expo_push_token, $noti_title, $noti_message);
