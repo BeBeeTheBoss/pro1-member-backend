@@ -1361,6 +1361,72 @@ class UserController extends Controller
         ]);
     }
 
+    public function updateMemberDataFromRDS(Request $request)
+    {
+        if ($request->nrc == null) {
+            return response()->json([
+                'responseCode' => '0',
+                'responseMessage' => 'NRC is required'
+            ]);
+        }
+
+        $user = $this->model->where('nrc', $request->nrc)->first();
+
+        if (!$user) {
+            return response()->json([
+                'responseCode' => '1',
+                'responseMessage' => 'Member is not registered yet!'
+            ]);
+        }
+
+        // Keep this identical to the other RDS-facing hash-protected APIs.
+        $jsonString = json_encode($request->except('hashValue'));
+
+        if (!$this->checkHashValue($jsonString, $request->hashValue)) {
+            return response()->json([
+                'responseCode' => '0',
+                'responseMessage' => 'Hash value is invalid'
+            ]);
+        }
+
+        if ($request->has('name')) {
+            $user->name = $request->name;
+        }
+        if ($request->has('phoneNo')) {
+            $user->phone = $request->phoneNo;
+        }
+        if ($request->has('nrc')) {
+            $user->nrc = $request->nrc;
+        }
+        if ($request->has('nrcNo')) {
+            $user->nrc_division_id = $request->nrcNo;
+        }
+        if ($request->has('nrcName')) {
+            $user->nrc_name_id = $request->nrcName;
+        }
+        if ($request->has('nrcShort')) {
+            $user->nrc_type = $request->nrcShort;
+        }
+        if ($request->has('nrcNumber')) {
+            $user->nrc_number = $request->nrcNumber;
+        }
+        if ($request->has('dob')) {
+            $user->birth_date = $request->dob;
+        }
+        if ($request->has('gender')) {
+            $user->gender = GenderNormalizer::normalize($request->input('gender'));
+        }
+
+        $user->save();
+
+        sendPushNotification($user->expo_push_token, 'System', 'Your member data has been updated');
+
+        return response()->json([
+            'responseCode' => '1',
+            'responseMessage' => 'Member data updated successfully'
+        ]);
+    }
+
     public function setPushToken(Request $request)
     {
         $request->validate([

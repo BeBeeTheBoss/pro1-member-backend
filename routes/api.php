@@ -133,6 +133,7 @@ Route::post('/sendUseCouponNotification', [UserController::class, 'sendUseCoupon
 Route::post('/sendSpinWheelPointNotification', [UserController::class, 'sendSpinWheelPointNotification'])->name('sendSpinWheelPointNotification');
 
 Route::post('/updateMemberData', [UserController::class, 'updateMemberData'])->name('updateMemberData');
+Route::post('/updateMemberDataFromRDS', [UserController::class, 'updateMemberDataFromRDS'])->name('updateMemberDataFromRDS');
 Route::post('/toggleActivateMember', [UserController::class, 'toggleActivateMember'])->name('toggleActivateMember');
 
 // Route::get('/user', function (Request $request) {
