@@ -1363,14 +1363,15 @@ class UserController extends Controller
 
     public function updateMemberDataFromRDS(Request $request)
     {
-        if ($request->nrc == null) {
+        if ($request->idcard == null) {
             return response()->json([
                 'responseCode' => '0',
-                'responseMessage' => 'NRC is required'
+                'responseMessage' => 'ID Card is required'
             ]);
         }
 
-        $user = $this->model->where('nrc', $request->nrc)->first();
+        // The member card identifies the user; NRC fields are the values updated from RDS.
+        $user = $this->model->where('idcard', $request->idcard)->first();
 
         if (!$user) {
             return response()->json([
@@ -1379,8 +1380,8 @@ class UserController extends Controller
             ]);
         }
 
-        // Keep this identical to the other RDS-facing hash-protected APIs.
-        $jsonString = json_encode($request->except('hashValue'));
+        // Match JavaScript/Postman JSON.stringify(), which does not escape NRC slashes.
+        $jsonString = json_encode($request->except('hashValue'), JSON_UNESCAPED_SLASHES);
 
         if (!$this->checkHashValue($jsonString, $request->hashValue)) {
             return response()->json([
@@ -1388,6 +1389,11 @@ class UserController extends Controller
                 'responseMessage' => 'Hash value is invalid'
             ]);
         }
+
+        // return response()->json([
+        //     'responseCode' => '1',
+        //     'responseMessage' => 'Member data updated successfully'
+        // ]);
 
         if ($request->has('name')) {
             $user->name = $request->name;
