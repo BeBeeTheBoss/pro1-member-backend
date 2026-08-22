@@ -6,6 +6,7 @@ import SuccessIcon from "../../images/check.png";
 import ErrorIcon from "../../images/delete.png";
 import ConfirmModal from "@/Components/ConfirmModal";
 import NotiMessage from "@/Components/NotiMessage";
+import Modal from "@/Components/Modal";
 
 export default function Members({ user, members, filters = {} }) {
     const [memberList, setMemberList] = useState(members.data ?? []);
@@ -13,6 +14,10 @@ export default function Members({ user, members, filters = {} }) {
     const [modelOpen, setModelOpen] = useState(false);
     const [memberIDForDelete, setMemberIDForDelete] = useState(null);
     const [notiOpen, setNotiOpen] = useState(false);
+    const [exportModalOpen, setExportModalOpen] = useState(false);
+    const [fromDate, setFromDate] = useState("");
+    const [toDate, setToDate] = useState("");
+    const [exportError, setExportError] = useState("");
 
     const [notiType, setNotiType] = useState("");
     const [notiTitle, setNotiTitle] = useState("");
@@ -81,6 +86,26 @@ export default function Members({ user, members, filters = {} }) {
         });
     };
 
+    const handleExport = (event) => {
+        event.preventDefault();
+        setExportError("");
+
+        if (!fromDate || !toDate) {
+            setExportError("Please select both From Date and To Date.");
+            return;
+        }
+
+        if (fromDate > toDate) {
+            setExportError("To Date must be the same as or later than From Date.");
+            return;
+        }
+
+        window.location.assign(
+            `/members/export?from_date=${encodeURIComponent(fromDate)}&to_date=${encodeURIComponent(toDate)}`
+        );
+        setExportModalOpen(false);
+    };
+
     return (
         <AuthenticatedLayout
             user={user}
@@ -88,7 +113,19 @@ export default function Members({ user, members, filters = {} }) {
             setModelOpen={setModelOpen}
         >
             <div>
-                <h4 className="text-xl font-bold mb-4">Members</h4>
+                <div className="mb-4 flex items-center justify-between gap-4">
+                    <h4 className="text-xl font-bold">Members</h4>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setExportError("");
+                            setExportModalOpen(true);
+                        }}
+                        className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-emerald-700"
+                    >
+                        Export Excel
+                    </button>
+                </div>
 
                 <div className="w-full overflow-hidden rounded-2xl mt-4 shadow-lg bg-dark bg-opacity-50">
                     {/* Search Box */}
@@ -296,6 +333,63 @@ export default function Members({ user, members, filters = {} }) {
                 header={notiTitle}
                 message={notiMessage}
             />
+
+            <Modal
+                show={exportModalOpen}
+                onClose={() => setExportModalOpen(false)}
+                maxWidth="md"
+            >
+                <form onSubmit={handleExport} className="p-6 text-gray-800">
+                    <h2 className="text-lg font-semibold">Export Members</h2>
+                    <p className="mt-1 text-sm text-gray-600">
+                        Choose the registration date range to export.
+                    </p>
+
+                    <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                        <label className="text-sm font-medium">
+                            From Date
+                            <input
+                                type="date"
+                                value={fromDate}
+                                onChange={(e) => setFromDate(e.target.value)}
+                                className="mt-1 block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                required
+                            />
+                        </label>
+                        <label className="text-sm font-medium">
+                            To Date
+                            <input
+                                type="date"
+                                value={toDate}
+                                min={fromDate || undefined}
+                                onChange={(e) => setToDate(e.target.value)}
+                                className="mt-1 block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                required
+                            />
+                        </label>
+                    </div>
+
+                    {exportError && (
+                        <p className="mt-3 text-sm text-red-600">{exportError}</p>
+                    )}
+
+                    <div className="mt-6 flex justify-end gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setExportModalOpen(false)}
+                            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                        >
+                            Export
+                        </button>
+                    </div>
+                </form>
+            </Modal>
         </AuthenticatedLayout>
     );
 }
