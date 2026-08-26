@@ -237,6 +237,11 @@ class UserController extends Controller
             if ($this->model->where('idcard', $member_info->identification_card)->first()) {
                 return sendResponse(null, 404, "Member account already exists");
             }
+
+            if($member_info->nrc_array_id == null || $member_info->nrc_array_id == '') {
+                return sendResponse(null, 404, "Member account has no NRC information");
+            }
+
         }
 
         generateOtp($member_info->mobile);
