@@ -6,10 +6,49 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 
 class MemberController extends Controller
 {
+    private const EXPORT_EXCLUDED_COLUMNS = [
+        'id',
+        'password',
+        'remember_token',
+        'updated_at',
+        'image',
+        'expo_push_token',
+        'device_id',
+        'is_active',
+        'device_type',
+        'total_usage_in_seconds',
+        'total_usage_time_in_seconds',
+        'streak_chanllenge_count',
+        'streak_challenge_count',
+        'current_streak',
+        'used_keys',
+        'keys',
+        'address',
+        'nationality',
+        'nrc',
+        'nrc_division_id',
+        'nrc_name_id',
+        'nrc_type',
+        'nrc_number',
+        'passport',
+        'division_id',
+        'township_id',
+        'branch_id',
+        'record_noti_status',
+        'register_type',
+        'reset_password',
+        'register_device_type',
+        'created_by',
+        'updated_by',
+        'remember_token_old',
+        'expo_push_token_old',
+    ];
+
     public function __construct(protected User $model) {}
 
     public function index(Request $request)
@@ -67,29 +106,29 @@ class MemberController extends Controller
         $fromDate = Carbon::parse($validated['from_date'])->startOfDay();
         $toDate = Carbon::parse($validated['to_date'])->endOfDay();
         $filename = "members_{$fromDate->toDateString()}_to_{$toDate->toDateString()}.csv";
+        $columns = array_values(array_diff(
+            Schema::getColumnListing($this->model->getTable()),
+            self::EXPORT_EXCLUDED_COLUMNS
+        ));
 
-        return response()->streamDownload(function () use ($fromDate, $toDate) {
+        return response()->streamDownload(function () use ($columns, $fromDate, $toDate) {
             $output = fopen('php://output', 'w');
 
             // UTF-8 BOM lets Microsoft Excel display Burmese and other Unicode text correctly.
             fwrite($output, "\xEF\xBB\xBF");
-            fputcsv($output, ['Name', 'ID Card', 'Phone', 'Gender', 'Birth Date', 'Registered Date']);
+            fputcsv($output, $columns);
 
             $this->model
                 ->query()
-                ->select('name', 'idcard', 'phone', 'gender', 'birth_date', 'created_at')
+                ->select($columns)
                 ->whereBetween('created_at', [$fromDate, $toDate])
                 ->orderBy('created_at')
-                ->chunk(500, function ($members) use ($output) {
+                ->chunk(500, function ($members) use ($columns, $output) {
                     foreach ($members as $member) {
-                        fputcsv($output, [
-                            $member->name,
-                            $member->idcard,
-                            $member->phone,
-                            $member->gender,
-                            $member->birth_date,
-                            $member->created_at?->format('Y-m-d H:i:s'),
-                        ]);
+                        fputcsv($output, array_map(
+                            fn ($column) => $this->excelSafeValue($member->getRawOriginal($column)),
+                            $columns
+                        ));
                     }
                 });
 
@@ -97,5 +136,14 @@ class MemberController extends Controller
         }, $filename, [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
+    }
+
+    private function excelSafeValue(mixed $value): mixed
+    {
+        if (is_string($value) && preg_match('/^[=+\-@]/', $value)) {
+            return "'".$value;
+        }
+
+        return $value;
     }
 }
