@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\SimpleXlsxWriter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -11,6 +12,28 @@ use Inertia\Inertia;
 
 class MemberController extends Controller
 {
+    private const EXPORT_HEADINGS = [
+        'branch_code' => 'Branch',
+        'device_name' => 'Device Type',
+    ];
+
+    private const BRANCH_NAMES = [
+        'MM-101' => 'Lanthit Branch',
+        'MM-102' => 'Theikpan Branch',
+        'MM-103' => 'Satsan Branch',
+        'MM-104' => 'East Dagon Branch',
+        'MM-105' => 'Mawlamyine Branch',
+        'MM-106' => 'Tampawaddy Branch',
+        'MM-107' => 'Hlaing Tharyar Branch',
+        'MM-108' => 'Aye Tharyar Branch',
+        'MM-109' => 'Minglardon Branch',
+        'MM-110' => 'Bago Branch',
+        'MM-112' => 'Pro1 Plus (Terminal-M)',
+        'MM-113' => 'South Dagon Branch',
+        'MM-114' => 'Da Nyin Gone Branch',
+        'MM-115' => 'Nay Pyi Taw Branch',
+    ];
+
     private const EXPORT_EXCLUDED_COLUMNS = [
         'id',
         'password',
@@ -105,43 +128,65 @@ class MemberController extends Controller
 
         $fromDate = Carbon::parse($validated['from_date'])->startOfDay();
         $toDate = Carbon::parse($validated['to_date'])->endOfDay();
-        $filename = "members_{$fromDate->toDateString()}_to_{$toDate->toDateString()}.csv";
+        $filename = "members_{$fromDate->toDateString()}_to_{$toDate->toDateString()}.xlsx";
         $columns = array_values(array_diff(
             Schema::getColumnListing($this->model->getTable()),
             self::EXPORT_EXCLUDED_COLUMNS
         ));
+        $columnTypes = array_combine(
+            $columns,
+            array_map(
+                fn ($column) => Schema::getColumnType($this->model->getTable(), $column),
+                $columns
+            )
+        );
 
-        return response()->streamDownload(function () use ($columns, $fromDate, $toDate) {
-            $output = fopen('php://output', 'w');
+        $headings = array_map(
+            fn ($column) => self::EXPORT_HEADINGS[$column]
+                ?? str($column)->replace('_', ' ')->title()->toString(),
+            $columns
+        );
+        $rows = $this->model
+            ->query()
+            ->select($columns)
+            ->whereBetween('created_at', [$fromDate, $toDate])
+            ->orderBy('created_at')
+            ->cursor()
+            ->map(fn ($member) => array_map(
+                fn ($column) => $this->formatExportValue(
+                    $column,
+                    $columnTypes[$column],
+                    $member->getRawOriginal($column)
+                ),
+                $columns
+            ));
+        $path = app(SimpleXlsxWriter::class)->write($headings, $rows);
 
-            // UTF-8 BOM lets Microsoft Excel display Burmese and other Unicode text correctly.
-            fwrite($output, "\xEF\xBB\xBF");
-            fputcsv($output, $columns);
-
-            $this->model
-                ->query()
-                ->select($columns)
-                ->whereBetween('created_at', [$fromDate, $toDate])
-                ->orderBy('created_at')
-                ->chunk(500, function ($members) use ($columns, $output) {
-                    foreach ($members as $member) {
-                        fputcsv($output, array_map(
-                            fn ($column) => $this->excelSafeValue($member->getRawOriginal($column)),
-                            $columns
-                        ));
-                    }
-                });
-
-            fclose($output);
-        }, $filename, [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-        ]);
+        return response()->download($path, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
     }
 
-    private function excelSafeValue(mixed $value): mixed
+    private function formatExportValue(string $column, string $type, mixed $value): mixed
     {
-        if (is_string($value) && preg_match('/^[=+\-@]/', $value)) {
-            return "'".$value;
+        if ($value === null || $value === '') {
+            return $value;
+        }
+
+        if ($column === 'branch_code') {
+            return self::BRANCH_NAMES[$value] ?? $value;
+        }
+
+        if ($column === 'device_name') {
+            return str_contains(strtolower((string) $value), 'iphone') ? 'IOS' : 'Android';
+        }
+
+        if (in_array($type, ['datetime', 'timestamp', 'datetime_tz', 'timestamp_tz'], true)) {
+            return Carbon::parse($value)->format('d-M-Y h:i A');
+        }
+
+        if ($type === 'date') {
+            return Carbon::parse($value)->format('d-M-Y');
         }
 
         return $value;
