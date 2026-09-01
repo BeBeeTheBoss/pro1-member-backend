@@ -212,6 +212,9 @@ class UserController extends Controller
 
     public function findMember(Request $request)
     {
+
+        FacadesLog::info("Find member start");
+        FacadesLog::info($request->idcard ?? $request->phone);
         $cloud_db = DB::connection('Cloud');
 
         $member_info = $cloud_db->table(table: 'public.gbh_customer')
@@ -245,6 +248,8 @@ class UserController extends Controller
         }
 
         generateOtp($member_info->mobile);
+
+        FacadesLog::info("Find member stop");
 
         return sendResponse($member_info, 200);
     }
@@ -1492,4 +1497,5 @@ class UserController extends Controller
 
         return sendResponse(null, 200, "Logout successfully");
     }
+
 }

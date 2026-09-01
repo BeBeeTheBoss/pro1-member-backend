@@ -26,6 +26,9 @@ Route::post('/register', [AuthController::class, 'register'])->name('register');
 Route::post('/resend-otp', [UserController::class, 'resendOtp']);
 Route::post('/verify-otp', [UserController::class, 'verifyOtp']);
 Route::get('/games-events', [GamesEventController::class, 'index']);
+Route::get('/test', function(){
+    return sendResponse(null, 200, 'Test API is working fine');
+});
 
 Route::group(['prefix' => 'users', 'controller' => UserController::class], function () {
     Route::get('/get', 'getUser')->name('getUser');
