@@ -70,6 +70,9 @@ class MemberController extends Controller
         'updated_by',
         'remember_token_old',
         'expo_push_token_old',
+        'member_type',
+        'is_deleted',
+        'is_wp_used'
     ];
 
     public function __construct(protected User $model) {}

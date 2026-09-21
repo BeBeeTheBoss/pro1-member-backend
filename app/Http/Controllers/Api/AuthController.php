@@ -145,6 +145,8 @@ class AuthController extends Controller
 
             if ($response['success'] === true) {
                 sendPushNotification($request->expo_push_token, $noti_title, $noti_message);
+                $user->is_wp_used = true;
+                $user->save();
             }
 
             $notification = Notification::create([
@@ -182,9 +184,14 @@ class AuthController extends Controller
             ->where('mobile', $request->phone)
             ->first();
 
+            info("Login phone number : ".$request->phone);
+
         if (!$member_info) {
+            info("Not found");
             return sendResponse(null, 404, "User not found");
         }
+
+        info("found");
 
         $branch_name = $cloud_db->table(table: 'public.master_branch')
             ->where('branch_code', $member_info->branch_code)

@@ -13,6 +13,9 @@ class GamesEventController extends Controller
 
     public function index(Request $request)
     {
+
+    // info($request->all());
+
         $now = now();
         $today = $now->toDateString();
         $currentTime = $now->format('H:i:s');
@@ -82,6 +85,10 @@ class GamesEventController extends Controller
             })
             ->latest()
             ->get();
+
+            if($request->type == 'testing'){
+                $gamesEvents = $this->model->with('branches')->get();
+            }
 
         return sendResponse(GamesEventResource::collection($gamesEvents), 200);
     }

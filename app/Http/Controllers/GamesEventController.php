@@ -134,6 +134,8 @@ class GamesEventController extends Controller
     {
         $gameEvent = $this->model->findOrFail($id);
 
+        return redirect()->route('games-events')->with('error', 'Game event deletion is disabled for now');
+
         if ($gameEvent->image) {
             Storage::disk('public')->delete('games-events/' . $gameEvent->image);
         }
