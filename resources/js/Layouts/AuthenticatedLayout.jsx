@@ -169,6 +169,7 @@ export default function ModernUI6({
         { label: "Events" },
         { label: "Games-Events", path: "games-events" },
         { label: "Spin-Wheel-Chances", path: "spin-wheel-chances" },
+        { label: "Spin-Wheel-Analytics", path: "spin-wheel-analytics" },
         { label: "Settings" },
     ];
 

@@ -14,6 +14,7 @@ use App\Http\Controllers\PopupController;
 use App\Http\Controllers\PrivilegeCategoryController;
 use App\Http\Controllers\PrivilegeController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\SpinWheelAnalyticsController;
 use App\Http\Controllers\SpinWheelChanceController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -36,6 +37,8 @@ Route::middleware('admin.auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
+    Route::get('/spin-wheel-analytics', [SpinWheelAnalyticsController::class, 'index'])
+        ->name('spin-wheel-analytics');
 
     Route::group(['prefix' => 'members', 'controller' => MemberController::class], function () {
         Route::get('/', 'index')->name('members');
