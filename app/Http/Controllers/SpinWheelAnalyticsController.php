@@ -181,11 +181,21 @@ class SpinWheelAnalyticsController extends Controller
                 'spin_wheel_chances_daily.id'
             )
             ->selectRaw('COUNT(*) as total_spins')
+            ->selectRaw('COUNT(DISTINCT spin_records.user_id) as unique_spinners')
+            ->selectRaw('COALESCE(SUM(spin_records.reward_points), 0) as reward_points')
+            ->selectRaw('COALESCE(AVG(spin_records.reward_points), 0) as average_reward_points')
             ->selectRaw("SUM(CASE WHEN spin_wheel_chances_daily.type = 'super_prize' THEN 1 ELSE 0 END) as super_prize_count")
             ->selectRaw("SUM(CASE WHEN spin_wheel_chances_daily.type = 'mega_prize' THEN 1 ELSE 0 END) as mega_prize_count")
             ->first();
 
-        $allTimeSpinCount = (int) ($allTimeTargetStats?->total_spins ?? 0);
+        $allTimeSummary = [
+            'total_spins' => (int) ($allTimeTargetStats?->total_spins ?? 0),
+            'unique_spinners' => (int) ($allTimeTargetStats?->unique_spinners ?? 0),
+            'reward_points' => (int) ($allTimeTargetStats?->reward_points ?? 0),
+            'average_reward_points' => round((float) ($allTimeTargetStats?->average_reward_points ?? 0), 1),
+        ];
+
+        $allTimeSpinCount = $allTimeSummary['total_spins'];
 
         $targets = [
             $this->targetMetrics(
@@ -229,6 +239,7 @@ class SpinWheelAnalyticsController extends Controller
             'analytics' => [
                 'filters' => $filters,
                 'summary' => $summary,
+                'all_time_summary' => $allTimeSummary,
                 'trend' => $trend,
                 'trend_granularity' => $isSingleDay ? 'hourly' : 'daily',
                 'prize_distribution' => $prizeDistribution,

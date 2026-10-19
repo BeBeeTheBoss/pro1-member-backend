@@ -73,7 +73,7 @@ const toInputDate = (date) => {
     return `${year}-${month}-${day}`;
 };
 
-const StatCard = ({ title, value, helper, icon: Icon, accent }) => (
+const StatCard = ({ title, value, helper, total, icon: Icon, accent }) => (
     <div className="rounded-xl border border-white/10 bg-white/[0.06] p-4 shadow">
         <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
@@ -90,6 +90,7 @@ const StatCard = ({ title, value, helper, icon: Icon, accent }) => (
             </div>
         </div>
         <p className="mt-3 text-xs text-gray-400">{helper}</p>
+        <p className="mt-2 text-[11px] text-gray-500">{total}</p>
     </div>
 );
 
@@ -455,6 +456,7 @@ const InventoryChart = ({ rows }) => {
 export default function SpinWheelAnalytics({ user, analytics }) {
     const filters = analytics?.filters ?? {};
     const summary = analytics?.summary ?? {};
+    const allTimeSummary = analytics?.all_time_summary ?? {};
     const trend = analytics?.trend ?? [];
     const prizeDistribution = analytics?.prize_distribution ?? [];
     const inventory = analytics?.inventory ?? [];
@@ -572,6 +574,7 @@ export default function SpinWheelAnalytics({ user, analytics }) {
                         title="Total spins"
                         value={formatNumber(summary.total_spins)}
                         helper={`${formatNumber(summary.super_prize_count)} super · ${formatNumber(summary.mega_prize_count)} mega`}
+                        total={`All time · ${formatNumber(allTimeSummary.total_spins)} spins`}
                         icon={RotateCw}
                         accent="#4f46e5"
                     />
@@ -579,6 +582,7 @@ export default function SpinWheelAnalytics({ user, analytics }) {
                         title="Unique spinners"
                         value={formatNumber(summary.unique_spinners)}
                         helper="Distinct members who spun in the period"
+                        total={`All time · ${formatNumber(allTimeSummary.unique_spinners)} members`}
                         icon={UserRoundCheck}
                         accent="#0f766e"
                     />
@@ -586,6 +590,7 @@ export default function SpinWheelAnalytics({ user, analytics }) {
                         title="Reward points"
                         value={formatNumber(summary.reward_points)}
                         helper="Total points awarded from spin records"
+                        total={`All time · ${formatNumber(allTimeSummary.reward_points)} points`}
                         icon={Gift}
                         accent="#0369a1"
                     />
@@ -593,6 +598,7 @@ export default function SpinWheelAnalytics({ user, analytics }) {
                         title="Average reward"
                         value={formatNumber(summary.average_reward_points, 1)}
                         helper="Reward points per recorded spin"
+                        total={`All-time average · ${formatNumber(allTimeSummary.average_reward_points, 1)} points`}
                         icon={Sparkles}
                         accent="#a16207"
                     />
