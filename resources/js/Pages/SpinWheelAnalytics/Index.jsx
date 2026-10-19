@@ -173,13 +173,16 @@ const TargetWheel = ({ target }) => {
                     </div>
                     <p className="mt-2 text-sm text-gray-400">
                         {enabled
-                            ? `${formatNumber(target.cycle_progress)} of ${formatNumber(target.target)} spins in the ${target.progress_date} cycle`
+                            ? `${formatNumber(target.cycle_progress)} of ${formatNumber(target.target)} spins in the all-time cycle`
                             : "No valid target configured in Settings"}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500">
+                        {formatNumber(target.total_spins)} total spins recorded all time
                     </p>
 
                     <dl className="mt-4 grid grid-cols-3 gap-3 text-center">
                         <div className="rounded-lg bg-white/[0.05] px-2 py-3">
-                            <dt className="text-[10px] uppercase text-gray-500">Awarded</dt>
+                            <dt className="text-[10px] uppercase text-gray-500">All awarded</dt>
                             <dd className="mt-1 font-semibold text-white">
                                 {formatNumber(target.awarded_count)}
                             </dd>

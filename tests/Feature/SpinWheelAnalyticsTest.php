@@ -50,6 +50,12 @@ class SpinWheelAnalyticsTest extends TestCase
             'max_times' => 1,
             'type' => 'mega_prize',
         ]);
+        $pastPrize = SpinWheelChanceDaily::create([
+            'date' => '2026-10-01',
+            'points' => 10,
+            'max_times' => 9,
+            'type' => 'other',
+        ]);
 
         Setting::create(['attribute' => 'super_prize_target', 'value' => '2']);
         Setting::create(['attribute' => 'mega_prize_target', 'value' => '3']);
@@ -57,6 +63,7 @@ class SpinWheelAnalyticsTest extends TestCase
         $this->createSpin($firstUser, $superPrize, 500, '2026-10-19 10:10:00');
         $this->createSpin($firstUser, $superPrize, 500, '2026-10-19 10:30:00');
         $this->createSpin($secondUser, $megaPrize, 5000, '2026-10-19 11:00:00');
+        $this->createSpin($firstUser, $pastPrize, 10, '2026-10-01 09:00:00');
 
         $response = $this->actingAs($admin, 'admin')->get(route('spin-wheel-analytics'));
 
@@ -75,9 +82,13 @@ class SpinWheelAnalyticsTest extends TestCase
                 ->where('analytics.trend.10.spin_count', 2)
                 ->has('analytics.targets', 2)
                 ->where('analytics.targets.0.target', 2)
-                ->where('analytics.targets.0.threshold_crossings', 1)
+                ->where('analytics.targets.0.total_spins', 4)
+                ->where('analytics.targets.0.threshold_crossings', 2)
+                ->where('analytics.targets.0.cycle_progress', 0)
                 ->where('analytics.targets.1.target', 3)
+                ->where('analytics.targets.1.total_spins', 4)
                 ->where('analytics.targets.1.threshold_crossings', 1)
+                ->where('analytics.targets.1.cycle_progress', 1)
                 ->has('analytics.prize_distribution', 2)
                 ->has('analytics.inventory', 2)
                 ->has('analytics.recent_records', 3));

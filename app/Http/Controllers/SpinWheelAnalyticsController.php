@@ -173,20 +173,32 @@ class SpinWheelAnalyticsController extends Controller
             ->whereIn('attribute', ['super_prize_target', 'mega_prize_target'])
             ->pluck('value', 'attribute');
 
+        $allTimeTargetStats = SpinRecord::query()
+            ->leftJoin(
+                'spin_wheel_chances_daily',
+                'spin_records.spin_wheel_chance_daily_id',
+                '=',
+                'spin_wheel_chances_daily.id'
+            )
+            ->selectRaw('COUNT(*) as total_spins')
+            ->selectRaw("SUM(CASE WHEN spin_wheel_chances_daily.type = 'super_prize' THEN 1 ELSE 0 END) as super_prize_count")
+            ->selectRaw("SUM(CASE WHEN spin_wheel_chances_daily.type = 'mega_prize' THEN 1 ELSE 0 END) as mega_prize_count")
+            ->first();
+
+        $allTimeSpinCount = (int) ($allTimeTargetStats?->total_spins ?? 0);
+
         $targets = [
             $this->targetMetrics(
                 'super_prize',
                 (int) ($targetSettings->get('super_prize_target') ?? 200),
-                $summary['super_prize_count'],
-                $dailyTrend,
-                $endDate->toDateString()
+                (int) ($allTimeTargetStats?->super_prize_count ?? 0),
+                $allTimeSpinCount
             ),
             $this->targetMetrics(
                 'mega_prize',
                 (int) ($targetSettings->get('mega_prize_target') ?? 20000),
-                $summary['mega_prize_count'],
-                $dailyTrend,
-                $endDate->toDateString()
+                (int) ($allTimeTargetStats?->mega_prize_count ?? 0),
+                $allTimeSpinCount
             ),
         ];
 
@@ -275,19 +287,16 @@ class SpinWheelAnalyticsController extends Controller
         string $type,
         int $target,
         int $awardedCount,
-        $dailyTrend,
-        string $endDate
+        int $allTimeSpinCount
     ): array {
         $target = max(0, $target);
-        $endDateSpins = (int) ($dailyTrend->firstWhere('key', $endDate)['spin_count'] ?? 0);
-        $cycleProgress = $target > 0 ? $endDateSpins % $target : 0;
-        $thresholdCrossings = $target > 0
-            ? $dailyTrend->sum(fn ($row) => intdiv($row['spin_count'], $target))
-            : 0;
+        $cycleProgress = $target > 0 ? $allTimeSpinCount % $target : 0;
+        $thresholdCrossings = $target > 0 ? intdiv($allTimeSpinCount, $target) : 0;
 
         return [
             'type' => $type,
             'target' => $target,
+            'total_spins' => $allTimeSpinCount,
             'awarded_count' => $awardedCount,
             'threshold_crossings' => $thresholdCrossings,
             'cycle_progress' => $cycleProgress,
@@ -295,7 +304,7 @@ class SpinWheelAnalyticsController extends Controller
                 ? round(($cycleProgress / $target) * 100, 1)
                 : 0,
             'spins_until_next' => $target > 0 ? $target - $cycleProgress : null,
-            'progress_date' => $endDate,
+            'scope' => 'all_time',
         ];
     }
 }
