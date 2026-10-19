@@ -40,7 +40,8 @@ function sendOtp($token, $end_point, $formatted_phone_number, $otp)
         'Authorization' => 'Bearer ' . $token,
     ])->post($end_point, [
         'to' => $formatted_phone_number,
-        'message' => "Your register OTP code is " . $otp . " for PRO 1 MM Member.",
+        // 'message' => "Your register OTP code is " . $otp . " for PRO 1 MM Member.",
+        'message' => "Your OTP code for PRO 1 Membership is " . $otp . ". Don't share this code with anyone.",
         'from' => 'PRO1 MM'
     ]);
 }

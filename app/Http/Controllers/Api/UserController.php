@@ -241,9 +241,9 @@ class UserController extends Controller
                 return sendResponse(null, 404, "Member account already exists");
             }
 
-            if($member_info->nrc_array_id == null || $member_info->nrc_array_id == '') {
-                return sendResponse(null, 404, "Member account has no NRC information");
-            }
+            // if($member_info->nrc_array_id == null || $member_info->nrc_array_id == '') {
+            //     return sendResponse(null, 404, "Member account has no NRC information");
+            // }
 
         }
 
@@ -988,8 +988,16 @@ class UserController extends Controller
             ]);
 
             DB::commit();
-            sendPushNotification($transferer->expo_push_token, $noti_title_for_transferer, $noti_message_for_transferer);
-            sendPushNotification($receiver->expo_push_token, $noti_title_for_receiver, $noti_message_for_receiver);
+
+            if($transferer->expo_push_token) {
+                sendPushNotification($transferer->expo_push_token, $noti_title_for_transferer, $noti_message_for_transferer);
+            }
+            if($receiver->expo_push_token) {
+                sendPushNotification($receiver->expo_push_token, $noti_title_for_receiver, $noti_message_for_receiver);
+            }
+
+            // sendPushNotification($transferer->expo_push_token, $noti_title_for_transferer, $noti_message_for_transferer);
+            // sendPushNotification($receiver->expo_push_token, $noti_title_for_receiver, $noti_message_for_receiver);
             return response()->json([
                 "responseCode" => "1",
                 "responseMessage" => "Notification is sent successfully"

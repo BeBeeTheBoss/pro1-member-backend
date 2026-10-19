@@ -32,6 +32,20 @@ class AuthController extends Controller
 
         DB::beginTransaction();
         try {
+
+        $nrc_array_id = $cloud_db->table(table: 'public.gbh_customer')
+                ->where('nrc_array_id', $request->tax_code)->where('identification_card', '!=', $request->idcard)
+                ->first();
+
+                $tax_code = $cloud_db->table(table: 'public.gbh_customer')
+                ->where('nrc_array_id', $request->tax_code)->where('identification_card', '!=', $request->idcard)
+                ->first();
+
+                if ($nrc_array_id || $tax_code) {
+                    return sendResponse(null, 404, "NRC already exists");
+                }
+        
+
             $cloud_db->table(table: 'public.gbh_customer')
                 ->where('identification_card', $request->idcard)
                 ->update([
@@ -41,6 +55,7 @@ class AuthController extends Controller
                     'fullname' => $request->fullname,
                     'tax_code' => $request->tax_code,
                     'nrc_array_id' => $request->tax_code,
+                    'email' => $request->email,
                     'date_birthday' => Carbon::parse($request->birthdate)->format('Y-m-d')
                 ]);
                 
