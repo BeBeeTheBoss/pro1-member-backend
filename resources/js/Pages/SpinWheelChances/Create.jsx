@@ -68,6 +68,7 @@ export default function CreateSpinWheelChance({ user }) {
                                 onChange={(e) => setData("type", e.target.value)}
                                 className="w-full px-3 py-2 rounded-lg bg-white/10 text-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
                             >
+                                <option value="mega_prize" className="text-black">mega_prize</option>
                                 <option value="super_prize" className="text-black">super_prize</option>
                                 <option value="fix_prize" className="text-black">fix_prize</option>
                                 <option value="other" className="text-black">other</option>

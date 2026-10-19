@@ -36,7 +36,7 @@ class SpinWheelChanceController extends Controller
         $validated = $request->validate([
             'points' => ['required', 'integer', 'min:1'],
             'max_times' => ['required', 'integer', 'min:0'],
-            'type' => ['required', 'in:super_prize,fix_prize,other'],
+            'type' => ['required', 'in:mega_prize,super_prize,fix_prize,other'],
         ]);
 
         $this->model->create($validated);
@@ -61,7 +61,7 @@ class SpinWheelChanceController extends Controller
             'id' => ['required', 'exists:spin_wheel_chances,id'],
             'points' => ['required', 'integer', 'min:1'],
             'max_times' => ['required', 'integer', 'min:0'],
-            'type' => ['required', 'in:super_prize,fix_prize,other'],
+            'type' => ['required', 'in:mega_prize,super_prize,fix_prize,other'],
         ]);
 
         $chance = $this->model->findOrFail($validated['id']);
