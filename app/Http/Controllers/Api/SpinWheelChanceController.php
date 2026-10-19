@@ -46,13 +46,13 @@ class SpinWheelChanceController extends Controller
 
         $super_prize = SpinWheelChanceDaily::whereDate('date', now()->toDateString())
             ->where('type', 'super_prize')
-            ->where('max_times', '!=', 0)
+            ->where('max_times', '>', 0)
             ->first();
         $super_prize_times = $super_prize ? $super_prize->max_times : 0;
 
         $mega_prize = SpinWheelChanceDaily::whereDate('date', now()->toDateString())
             ->where('type', 'mega_prize')
-            ->where('max_times', '!=', 0)
+            ->where('max_times', '>', 0)
             ->first();
         $mega_prize_times = $mega_prize ? $mega_prize->max_times : 0;
 
