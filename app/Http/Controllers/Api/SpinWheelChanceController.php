@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use App\Models\SpinRecord;
+use App\Models\SpinWheelChance;
 use App\Models\SpinWheelChanceDaily;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -49,9 +50,26 @@ class SpinWheelChanceController extends Controller
             ->first();
         $super_prize_times = $super_prize ? $super_prize->max_times : 0;
 
-        $target = Setting::where('attribute','super_prize_target')->first()->value ?? 200;
+        $mega_prize = SpinWheelChanceDaily::whereDate('date', now()->toDateString())
+            ->where('type', 'mega_prize')
+            ->where('max_times', '!=', 0)
+            ->first();
+        $mega_prize_times = $mega_prize ? $mega_prize->max_times : 0;
 
-        if ($spin_count % $target === 0 && $super_prize_times > 0) {
+        $mega_prize_all_time = SpinWheelChance::where('type', 'mega_prize')->first();
+
+        $target = Setting::where('attribute','super_prize_target')->first()->value ?? 200;
+        $mega_prize_target = Setting::where('attribute','mega_prize_target')->first()->value ?? 20000;
+
+        if($spin_count % $mega_prize_target === 0 && $mega_prize_times > 0) {
+
+            $mega_prize->max_times -= 1;
+            $mega_prize->save();
+            $points = $mega_prize;
+            $mega_prize_all_time->max_times -= 1;
+            $mega_prize_all_time->save();
+
+        } else if ($spin_count % $target === 0 && $super_prize_times > 0) {
 
             $super_prize->max_times -= 1;
             $super_prize->save();
@@ -72,9 +90,6 @@ class SpinWheelChanceController extends Controller
                 $points->save();
             }
         }
-
-
-        //call api to add points to user
 
         SpinRecord::create([
             'user_id' => $user->id,
