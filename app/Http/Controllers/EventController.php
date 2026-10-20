@@ -5,12 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Event;
 use App\Models\EventPlatform;
 use App\Models\EventPlatformLink;
-use Inertia\Inertia;
-use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
 
 class EventController extends Controller
 {
@@ -47,13 +47,13 @@ class EventController extends Controller
 
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-            $filename = time() . '.' . $request->image->extension();
+            $filename = time().'.'.$request->image->extension();
             Storage::disk('public')->putFileAs('events', $image, $filename);
             $event->image = $filename;
             $event->save();
         }
 
-        foreach ($validated['platforms'] as $row) {
+        foreach ($validated['platforms'] ?? [] as $row) {
             EventPlatformLink::create([
                 'event_id' => $event->id,
                 'event_platform_id' => $row['event_platform_id'],
@@ -74,13 +74,13 @@ class EventController extends Controller
             'end_date' => ['required', 'date'],
             'end_time' => ['required', 'date_format:H:i'],
             'image' => [$imageRequired ? 'required' : 'nullable', 'image'],
-            'platforms' => ['required', 'array', 'min:1'],
+            'platforms' => ['nullable', 'array'],
             'platforms.*.event_platform_id' => ['required', 'exists:event_platforms,id'],
             'platforms.*.link' => ['required', 'string'],
         ]);
 
-        $startsAt = Carbon::parse($validated['start_date'] . ' ' . $validated['start_time']);
-        $endsAt = Carbon::parse($validated['end_date'] . ' ' . $validated['end_time']);
+        $startsAt = Carbon::parse($validated['start_date'].' '.$validated['start_time']);
+        $endsAt = Carbon::parse($validated['end_date'].' '.$validated['end_time']);
 
         if ($endsAt->lt($startsAt)) {
             throw ValidationException::withMessages([
@@ -117,9 +117,9 @@ class EventController extends Controller
 
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-            $filename = time() . '.' . $request->image->extension();
+            $filename = time().'.'.$request->image->extension();
             if ($event->image) {
-                Storage::disk('public')->delete('events/' . $event->image);
+                Storage::disk('public')->delete('events/'.$event->image);
             }
             Storage::disk('public')->putFileAs('events', $image, $filename);
             $event->image = $filename;
@@ -128,7 +128,7 @@ class EventController extends Controller
 
         EventPlatformLink::where('event_id', $event->id)->delete();
 
-        foreach ($validated['platforms'] as $row) {
+        foreach ($validated['platforms'] ?? [] as $row) {
             EventPlatformLink::create([
                 'event_id' => $event->id,
                 'event_platform_id' => $row['event_platform_id'],
@@ -143,7 +143,7 @@ class EventController extends Controller
     {
         $event = $this->model->find($id);
         if ($event?->image) {
-            Storage::disk('public')->delete('events/' . $event->image);
+            Storage::disk('public')->delete('events/'.$event->image);
         }
         $event->delete();
 

@@ -9,7 +9,7 @@ export default function CreateEvent({ user, platforms }) {
         { event_platform_id: "", link: "" },
     ]);
 
-    const { data, setData, post, processing, errors, setError, clearErrors } =
+    const { data, setData, transform, post, processing, errors, setError, clearErrors } =
         useForm({
             name: "",
             description: "",
@@ -99,17 +99,24 @@ export default function CreateEvent({ user, platforms }) {
             hasError = true;
         }
 
-        const validPlatforms = data.platforms.filter(
+        const enteredPlatforms = data.platforms.filter(
+            (p) => p.event_platform_id || p.link.trim()
+        );
+        const validPlatforms = enteredPlatforms.filter(
             (p) => p.event_platform_id && p.link.trim()
         );
 
-        if (validPlatforms.length === 0) {
-            setError("platforms", "At least one platform and link is required");
+        if (enteredPlatforms.length !== validPlatforms.length) {
+            setError("platforms", "Both platform and link are required when adding a platform");
             hasError = true;
         }
 
         if (hasError) return;
 
+        transform((formData) => ({
+            ...formData,
+            platforms: validPlatforms,
+        }));
         post("/events", { forceFormData: true });
     };
 
@@ -365,7 +372,7 @@ export default function CreateEvent({ user, platforms }) {
                         <div className="bg-white/5 rounded-xl p-4">
                             <div className="flex items-center justify-between mb-3">
                                 <label className="block text-lg text-white">
-                                    Platforms & Links <span className="text-red-400">*</span>
+                                    Platforms & Links <span className="text-white/50 text-sm">(Optional)</span>
                                 </label>
                                 <button
                                     type="button"
