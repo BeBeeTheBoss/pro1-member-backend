@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\GamesEvent;
 
 class SpinWheelChanceController extends Controller
 {
@@ -44,6 +45,14 @@ class SpinWheelChanceController extends Controller
 
         $spin_count = SpinRecord::whereDate('date', now()->toDateString())->count() + 1;
 
+        $campaign_start_date = GamesEvent::where('type', 'spin_wheel')->first()->start_date;
+        $campaign_end_date = GamesEvent::where('type', 'spin_wheel')->first()->end_date;
+
+        $all_spin_count = SpinRecord::whereBetween('date', [
+            $campaign_start_date,
+            $campaign_end_date,
+        ])->count() + 1;
+
         $super_prize = SpinWheelChanceDaily::whereDate('date', now()->toDateString())
             ->where('type', 'super_prize')
             ->where('max_times', '>', 0)
@@ -61,7 +70,7 @@ class SpinWheelChanceController extends Controller
         $target = Setting::where('attribute','super_prize_target')->first()->value ?? 200;
         $mega_prize_target = Setting::where('attribute','mega_prize_target')->first()->value ?? 20000;
 
-        if($spin_count % $mega_prize_target === 0 && $mega_prize_times > 0) {
+        if($all_spin_count % $mega_prize_target === 0 && $mega_prize_times > 0) {
 
             $mega_prize->max_times -= 1;
             $mega_prize->save();
