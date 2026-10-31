@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\DailyRewardController;
 use App\Http\Controllers\Api\GamesEventController;
 use App\Http\Controllers\Api\SessionController;
+use App\Http\Controllers\Api\ServerTimeController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\SpinWheelChanceController;
 use App\Http\Controllers\Api\UserController;
@@ -26,6 +27,7 @@ Route::post('/register', [AuthController::class, 'register'])->name('register');
 Route::post('/resend-otp', [UserController::class, 'resendOtp']);
 Route::post('/verify-otp', [UserController::class, 'verifyOtp']);
 Route::get('/games-events', [GamesEventController::class, 'index']);
+Route::get('/server-time', ServerTimeController::class);
 Route::get('/test', function(){
     return sendResponse(null, 200, 'Test API is working fine');
 });
